@@ -6,14 +6,14 @@ See: `.planning/PROJECT.md` (updated 2026-03-21)
 
 **Core value:** Visitors reliably get a fast, credible brand experience and can read blog content sourced from WordPress without the marketing site depending on WordPress for page shells or routing.
 
-**Current focus:** Phase 1 — Marketing shell & motion
+**Current focus:** Phase 1 — Marketing shell & motion (`01-01` GSAP/Lenis fixes landed; run `01-02` QA next)
 
 ## Current Position
 
 **Phase:** 1 of 3 (Marketing shell & motion)  
 **Plan:** — of — (plans TBD in `/gsd:plan-phase`)  
 **Status:** Ready to plan  
-**Last activity:** 2026-03-21 — ROADMAP.md and STATE.md initialized from v1 requirements
+**Last activity:** 2026-03-21 — GSAP hygiene in `src/`; plans `01-01` / `01-02` under `.planning/phases/01-marketing-shell/`
 
 **Progress:** [░░░░░░░░░░] 0%
 

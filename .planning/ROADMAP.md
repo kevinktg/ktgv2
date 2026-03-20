@@ -27,11 +27,10 @@ Deliver a production-ready KTG One site in three coarse milestones: first a cons
   3. GSAP usage follows project rules: `useGSAP` with scope, ScrollTrigger registered, transform/opacity-first animations.
   4. Smooth scroll (Lenis) and ScrollTrigger stay synchronized (single driver; no duplicate scroll controllers).
 
-**Plans**: TBD
+**Plans**
 
-Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] **01-01** — [GSAP + Lenis correctness](phases/01-marketing-shell/01-01-PLAN.md) — ESM ScrollTrigger in Lenis bridge; `useGSAP` scope/deps; BlogPreview wheel + ScrollTrigger API fixes
+- [ ] **01-02** — [Shell, hydration, motion QA](phases/01-marketing-shell/01-02-PLAN.md) — Route walkthrough, reduced-motion / transition hardening
 
 ### Phase 2: WordPress content & blog
 **Goal:** Visitors can list and read WordPress posts with stable URLs, embedded media, safe HTML rendering, and clear handling of missing or failed content.
@@ -48,11 +47,10 @@ Plans:
   5. Published WordPress HTML bodies render in post detail without breaking the page shell; trust/sanitization stance is documented and consistent.
   6. Single-post fetch handles empty API results and errors without crashing the page shell.
 
-**Plans**: TBD
+**Plans**
 
-Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] **02-01** — WordPress client hardening — timeouts on all fetches, consistent error surfaces, HTML trust note for `dangerouslySetInnerHTML`
+- [ ] **02-02** — Blog routes — index + `[slug]` + not-found; featured media fallbacks; pagination strategy if needed
 
 ### Phase 3: SEO & operations
 **Goal:** Search and social surfaces reflect core routes and blog posts; production builds and monitoring match documented constraints.
@@ -68,11 +66,10 @@ Plans:
   4. Production install/build matches documented constraints (`npm install --legacy-peer-deps` where required) and `npm run build` passes in CI.
   5. Speed Insights (or equivalent documented RUM) is included for production monitoring.
 
-**Plans**: TBD
+**Plans**
 
-Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] **03-01** — Metadata + OG/Twitter absolute URLs audit across marketing + blog templates
+- [ ] **03-02** — Sitemap scale (paginate beyond 100 posts), CI/build parity, Speed Insights verification
 
 ## Progress
 
@@ -80,10 +77,11 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Marketing shell & motion | 0/TBD | Not started | - |
-| 2. WordPress content & blog | 0/TBD | Not started | - |
-| 3. SEO & operations | 0/TBD | Not started | - |
+| 1. Marketing shell & motion | 0/2 | In progress (01-01 code landed) | - |
+| 2. WordPress content & blog | 0/2 | Not started | - |
+| 3. SEO & operations | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-03-21 — granularity: coarse (3 phases)*  
-*Milestone: current v1 planning cycle*
+*Milestone: current v1 planning cycle*  
+*Last updated: 2026-03-21 — Phase 1 plans filed under `.planning/phases/01-marketing-shell/`; GSAP hygiene fixes in `src/`*
