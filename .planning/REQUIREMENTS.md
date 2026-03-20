@@ -77,27 +77,27 @@ Deferred until triggers in `.planning/research/FEATURES.md` / `SUMMARY.md` fire 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMS-01 | — | Pending |
-| CMS-02 | — | Pending |
-| CMS-03 | — | Pending |
-| BLOG-01 | — | Pending |
-| BLOG-02 | — | Pending |
-| BLOG-03 | — | Pending |
-| MRKT-01 | — | Pending |
-| MRKT-02 | — | Pending |
-| MOTN-01 | — | Pending |
-| MOTN-02 | — | Pending |
-| SEO-01 | — | Pending |
-| SEO-02 | — | Pending |
-| SEO-03 | — | Pending |
-| OPS-01 | — | Pending |
-| OPS-02 | — | Pending |
+| CMS-01 | Phase 2 | Pending |
+| CMS-02 | Phase 2 | Pending |
+| CMS-03 | Phase 2 | Pending |
+| BLOG-01 | Phase 2 | Pending |
+| BLOG-02 | Phase 2 | Pending |
+| BLOG-03 | Phase 2 | Pending |
+| MRKT-01 | Phase 1 | Pending |
+| MRKT-02 | Phase 1 | Pending |
+| MOTN-01 | Phase 1 | Pending |
+| MOTN-02 | Phase 1 | Pending |
+| SEO-01 | Phase 3 | Pending |
+| SEO-02 | Phase 3 | Pending |
+| SEO-03 | Phase 3 | Pending |
+| OPS-01 | Phase 3 | Pending |
+| OPS-02 | Phase 3 | Pending |
 
 **Coverage:**
 
 - v1 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 (roadmap step will map)
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-21*  
