@@ -42,7 +42,7 @@ import { ComponentName } from "@/components/ComponentName";
 - **Functional components only** with `"use client";` directive
 - **Forward ref pattern** for DOM references: `forwardRef((props, ref) => {...})`
 - **Consistent useGSAP hook** for all GSAP animations
-- **Component naming:** PascalCase with descriptive names (e.g., `HeroSection`, `CareerTimeline`)
+- **Component naming:** PascalCase with descriptive names (e.g., `HeroSection`, `ExpertiseSection`)
 
 ### Formatting Conventions
 - **Indentation:** 2 spaces (no tabs)
