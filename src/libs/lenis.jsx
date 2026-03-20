@@ -3,6 +3,9 @@
 import { ReactLenis as Lenis } from "lenis/react";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function ReactLenis({
   root,
@@ -16,7 +19,6 @@ export function ReactLenis({
     if (!lenisRef.current?.lenis) return;
 
     const lenis = lenisRef.current.lenis;
-    const { ScrollTrigger } = require("gsap/ScrollTrigger");
 
     // 1. THE BRIDGE: Sync Lenis with GSAP's internal clock (Ticker)
     // Why? GSAP updates animations on every frame. Lenis updates scroll on every frame.

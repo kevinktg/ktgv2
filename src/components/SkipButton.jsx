@@ -9,12 +9,14 @@ export function SkipButton() {
   const buttonRef = useRef(null);
 
   useGSAP(() => {
+    if (!buttonRef.current) return;
     // Fade in after a delay to allow initial hero impact
-    gsap.fromTo(buttonRef.current,
+    gsap.fromTo(
+      buttonRef.current,
       { opacity: 0, y: 10 },
       { opacity: 1, y: 0, delay: 2, duration: 1, ease: "power2.out" }
     );
-  }, []);
+  }, { scope: buttonRef });
 
   const handleSkip = () => {
     // Find BlogPreview section and scroll to it

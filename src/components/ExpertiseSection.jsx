@@ -168,7 +168,7 @@ export const ExpertiseSection = forwardRef(({ expertiseData }, ref) => {
         });
     }, null, "-=0.5"); // Trigger after values are visible
 
-  }, { scope: containerRef });
+  }, { scope: containerRef, dependencies: [hasPlayed] });
 
   return (
     <section ref={containerRef} className="relative min-h-screen bg-white text-black overflow-hidden py-20 z-30 content-visibility-auto">

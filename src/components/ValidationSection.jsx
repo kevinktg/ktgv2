@@ -193,7 +193,7 @@ export function ValidationSection({ auditData }) {
       if (scrollTween) scrollTween.kill();
     };
 
-  }, { scope: sectionRef });
+  }, { scope: sectionRef, dependencies: [hasPlayed] });
 
   return (
     <section ref={sectionRef} className="relative w-full py-8 overflow-hidden bg-background z-40">

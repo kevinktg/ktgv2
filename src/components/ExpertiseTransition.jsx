@@ -65,7 +65,7 @@ export function ExpertiseTransition() {
       0.2
     );
 
-  }, { scope: containerRef });
+  }, { scope: containerRef, dependencies: [hasPlayed] });
 
   return (
     <div
