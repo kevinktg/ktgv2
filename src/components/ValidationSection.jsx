@@ -133,6 +133,7 @@ export function ValidationSection({ auditData }) {
       scrollTween = gsap.to(strip, {
         x: () => -Math.max(0, strip.scrollWidth - viewport.clientWidth),
         ease: "none",
+        force3D: true,
         scrollTrigger: {
           id: "validation-hx",
           trigger: sectionRef.current,
