@@ -107,90 +107,76 @@ export function ValidationSection({ auditData }) {
       });
     }
 
-    // PHASE 3: CARD-ONLY SCROLLTRIGGER (Graphite.com pattern)
-    // Pin the card itself, scroll content horizontally inside
-    let pinTrigger = null;
+    // PHASE 3: Single ScrollTrigger — pin + horizontal scrub on ONE trigger (Lenis-safe).
+    // Two separate triggers (pin + tween) desync with smooth scroll and feel "not there".
     let scrollTween = null;
     let resizeTimeout = null;
-    
-    const setupScrollTrigger = () => {
+
+    const setupHorizontalScroll = () => {
+      scrollTween?.kill();
+      scrollTween = null;
+      ScrollTrigger.getById("validation-hx")?.kill();
+
       if (!sectionRef.current || !cardRef.current || !horizontalScrollRef.current) {
-        console.warn('[ValidationSection] Refs not ready for ScrollTrigger setup');
         return;
       }
-      
-      // Calculate horizontal scroll distance
-      const scrollWidth = horizontalScrollRef.current.scrollWidth;
-      const clientWidth = cardRef.current.clientWidth;
-      const contentWidth = scrollWidth - clientWidth;
-      
-      if (contentWidth > 0) {
-        // FORCE MINIMUM SCROLL DISTANCE
-        // Ensures the scroll doesn't happen "lightning fast" even if width calc is small
-        const scrollDistance = Math.max(contentWidth, 1500);
 
-        // Pin the entire section - section stays fixed while content scrolls
-        pinTrigger = ScrollTrigger.create({
+      const strip = horizontalScrollRef.current;
+      const viewport = cardRef.current;
+      const travel = Math.max(0, strip.scrollWidth - viewport.clientWidth);
+
+      if (travel <= 0) {
+        console.warn("[ValidationSection] No horizontal overflow yet — layout may still be settling.");
+        return;
+      }
+
+      scrollTween = gsap.to(strip, {
+        x: () => -Math.max(0, strip.scrollWidth - viewport.clientWidth),
+        ease: "none",
+        scrollTrigger: {
+          id: "validation-hx",
           trigger: sectionRef.current,
           start: "top top",
-          end: () => `+=${scrollDistance + window.innerHeight}`,
+          // 1:1 vertical scroll distance ≈ horizontal travel (tweak multiplier if you want longer "dwell")
+          end: () => `+=${Math.max(strip.scrollWidth - viewport.clientWidth, 1)}`,
           pin: true,
           pinSpacing: true,
+          scrub: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-        });
-        
-        // Animate horizontal scroll of content inside card
-        // This is tied to the section's scroll progress
-        scrollTween = gsap.to(horizontalScrollRef.current, {
-          x: -contentWidth, // We still only scroll the actual width
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: () => `+=${scrollDistance + window.innerHeight}`,
-            scrub: 1,
-            invalidateOnRefresh: true,
-          }
-        });
-      } else {
-        console.warn('[ValidationSection] No horizontal scroll content detected');
-      }
+        },
+      });
     };
-    
-    // Setup with delay to ensure Lenis/ScrollTrigger are fully initialized
-    // Also ensures refs are definitely attached to DOM
+
     const initTimeout = setTimeout(() => {
-      // Double-check refs are ready before setup
-      if (cardRef.current && horizontalScrollRef.current) {
-        setupScrollTrigger();
-        // Refresh ScrollTrigger after setup to ensure it recognizes the elements
-        ScrollTrigger.refresh();
-      } else {
-        console.warn('[ValidationSection] Refs still not ready after delay');
-      }
+      setupHorizontalScroll();
+      ScrollTrigger.refresh(true);
     }, 300);
-    
-    // OPTIMIZATION: Debounced resize handler to prevent excessive recalculations
-    const handleResize = () => {
+
+    const scheduleRefresh = () => {
       if (resizeTimeout) clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        if (pinTrigger) pinTrigger.kill();
-        if (scrollTween) scrollTween.kill();
-        ScrollTrigger.refresh();
-        setupScrollTrigger();
-      }, 150);
+        setupHorizontalScroll();
+        ScrollTrigger.refresh(true);
+      }, 120);
     };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup function
+
+    window.addEventListener("resize", scheduleRefresh);
+
+    const ro =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => scheduleRefresh())
+        : null;
+    if (ro && cardRef.current) ro.observe(cardRef.current);
+    if (ro && horizontalScrollRef.current) ro.observe(horizontalScrollRef.current);
+
     return () => {
       clearTimeout(initTimeout);
       if (resizeTimeout) clearTimeout(resizeTimeout);
-      window.removeEventListener('resize', handleResize);
-      if (pinTrigger) pinTrigger.kill();
-      if (scrollTween) scrollTween.kill();
+      window.removeEventListener("resize", scheduleRefresh);
+      ro?.disconnect();
+      scrollTween?.kill();
+      ScrollTrigger.getById("validation-hx")?.kill();
     };
 
   }, { scope: sectionRef, dependencies: [hasPlayed] });

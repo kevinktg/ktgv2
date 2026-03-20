@@ -61,9 +61,10 @@ export function ReactLenis({
     });
 
     // 4. Refresh ScrollTrigger when Lenis updates (for dynamic content)
-    lenis.on("scroll", () => {
+    const onLenisScroll = () => {
       ScrollTrigger.update();
-    });
+    };
+    lenis.on("scroll", onLenisScroll);
 
     // 5. EXPOSE LENIS INSTANCE: Make it available globally for skip button
     window.lenis = lenis;
@@ -76,7 +77,7 @@ export function ReactLenis({
     // 7. CLEANUP: Remove the listener when component unmounts
     return () => {
       gsap.ticker.remove(update);
-      lenis.off("scroll");
+      lenis.off("scroll", onLenisScroll);
       ScrollTrigger.scrollerProxy(window, {});
       if (window.lenis === lenis) {
         delete window.lenis;
