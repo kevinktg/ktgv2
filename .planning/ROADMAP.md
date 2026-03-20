@@ -77,7 +77,7 @@ Deliver a production-ready KTG One site in three coarse milestones: first a cons
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Marketing shell & motion | 0/2 | In progress (01-01 code landed) | - |
+| 1. Marketing shell & motion | 1/2 | In progress (01-01 complete; 01-02 QA pending) | - |
 | 2. WordPress content & blog | 0/2 | Not started | - |
 | 3. SEO & operations | 0/2 | Not started | - |
 
