@@ -101,4 +101,4 @@ Deferred until triggers in `.planning/research/FEATURES.md` / `SUMMARY.md` fire 
 
 ---
 *Requirements defined: 2026-03-21*  
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 after roadmap creation (traceability)*
