@@ -5,7 +5,6 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useRef } from "react";
 import Link from "next/link";
-import { GeometricBackground } from "@/components/GeometricBackground";
 import { SplitText } from "@/components/SplitText";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
@@ -98,11 +97,7 @@ export function PhilosophySection({ philosophyData }) {
   );
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen bg-black py-32 px-6 overflow-hidden z-50">
-      <div className="absolute inset-0 z-0">
-        <GeometricBackground />
-      </div>
-
+    <section ref={sectionRef} className="relative min-h-screen py-32 px-6 overflow-hidden z-50">
       <div className="max-w-6xl mx-auto relative z-10">
         <div ref={textRef} className="mb-40">
           <div className="grid md:grid-cols-2 gap-16 items-start">
@@ -161,7 +156,7 @@ export function PhilosophySection({ philosophyData }) {
                 </div>
 
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 border border-white/20 rotate-45 group-hover:rotate-180 group-hover:scale-150 transition-all duration-700 ${index % 2 !== 0 ? "-left-2" : "-right-2"} bg-black`}
+                  className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 border border-white/20 rotate-45 group-hover:rotate-180 group-hover:scale-150 transition-all duration-700 ${index % 2 !== 0 ? "-left-2" : "-right-2"} bg-background`}
                 />
               </div>
             </div>

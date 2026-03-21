@@ -12,8 +12,7 @@ function getReducedMotion() {
  * Syncs on prefers-reduced-motion changes.
  */
 export function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(getReducedMotion);
-
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(mq.matches);
