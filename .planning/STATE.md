@@ -37,7 +37,9 @@ Logged in `PROJECT.md` Key Decisions. None new since roadmap creation.
 
 ### Pending Todos
 
-None captured in `.planning/todos/pending/` yet.
+2 pending in `.planning/todos/pending/`:
+- Invoke skill before executing (general)
+- Verify stacking cards ScrollTrigger fix (ui)
 
 ### Blockers/Concerns
 
