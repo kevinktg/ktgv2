@@ -15,7 +15,7 @@ This project is a high-performance portfolio website for a "Top 0.01% prompt eng
 - **Library:** React 19
 - **Styling:** Tailwind CSS 4
 - **Animations:** GSAP (GreenSock Animation Platform) + ScrollTrigger
-- **3D/Canvas:** Three.js (@react-three/fiber, @react-three/drei)
+- **3D/Canvas:** Three.js (react-three-fiber and react-three-drei)
 - **Scroll:** Lenis
 - **Deployment:** Vercel
 
