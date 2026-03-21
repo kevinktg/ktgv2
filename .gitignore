@@ -49,7 +49,16 @@ claude_settings.json
 .github
 debug-screenshots
 coordination
-
+.vscode
+mcp.json
+ktg1
+ktg2
+ktg3
+ktg1.zip
+ktg2.zip
+ktg3.zip
+.serena
+ktg.zip
 # Logs and temp files
 *.log
 *.tmp
@@ -123,5 +132,7 @@ htmlcov/
 .next/
 
 # OpenMemory - IDE/Assistant specific rules
+.cursor\rules\openmemory.mdc
+AGENTS.md
 .cursor\rules\openmemory.mdc
 AGENTS.md
