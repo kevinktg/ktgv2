@@ -5,89 +5,222 @@
 ## Naming Patterns
 
 **Files:**
-- React components: `PascalCase.jsx` under `src/components/` (e.g., `HeroSection.jsx`, `ClientLayout.jsx`).
-- App Router routes: `page.jsx`, `layout.jsx`, `template.jsx`, `not-found.jsx` in `src/app/`; dynamic segments use bracket folders (e.g., `src/app/blog/[slug]/page.jsx`).
-- Utilities: `camelCase.js` (e.g., `src/lib/wordpress.js`, `src/lib/utils.js`).
-- UI primitives: `kebab-case` filenames matching shadcn-style (e.g., `src/components/ui/navigation-menu.jsx`).
+- Components: PascalCase with `.jsx` extension (e.g., `HeroSection.jsx`, `ValidationSection.jsx`)
+- Utilities/hooks: camelCase with `.js` extension (e.g., `usePrefersReducedMotion.js`, `utils.js`)
+- Pages: lowercase with `.jsx` extension (e.g., `page.jsx`, `layout.jsx`)
+- UI components: PascalCase grouped in `src/components/ui/` (e.g., `button.jsx`, `card.jsx`)
 
 **Functions:**
-- `camelCase` for functions and hooks (`fetchWithTimeout`, `getPosts`).
-- Event handlers: `handle*` where used (e.g., `handleScroll` in `src/components/HeroSection.jsx`).
+- React components: PascalCase, exported as named exports (e.g., `export function HeroSection()`)
+- Helper functions: camelCase (e.g., `fetchWithTimeout()`, `getReducedMotion()`)
+- Custom hooks: camelCase with `use` prefix (e.g., `usePrefersReducedMotion()`)
+- Utility functions: camelCase descriptive names (e.g., `cn()`, `getFeaturedImage()`)
 
 **Variables:**
-- `camelCase` for locals and props; `UPPER_SNAKE` for module-level constants (e.g., `WORDPRESS_URL`, `REQUEST_TIMEOUT` in `src/lib/wordpress.js`).
+- State variables: camelCase (e.g., `hasPlayed`, `isMobile`, `isReady`)
+- References/refs: camelCase with `Ref` suffix (e.g., `sectionRef`, `textRef`, `quoteRefs`)
+- Constants: UPPER_SNAKE_CASE for module-level constants (e.g., `GRAPHITE_END_VIEWPORT_PAD`, `REQUEST_TIMEOUT`, `PARALLAX_TOP`)
+- Data objects: descriptive camelCase or as provided by props (e.g., `philosophyData`, `auditData`, `blogPosts`)
 
 **Types:**
-- JavaScript only (`.jsx` / `.js`); JSDoc recommended for public helpers per `AGENTS.md`.
-- No TypeScript interfaces in source today.
+- No TypeScript: codebase uses JSX without TypeScript
+- JSDoc comments for type hints when needed (e.g., `/** @type {import('next').NextConfig} */`)
 
 ## Code Style
 
 **Formatting:**
-- No committed Prettier config (`.prettierrc` not present); match existing files: 2-space indent, double quotes common in components.
-- Target line length: under 100 characters per `AGENTS.md`.
+- No explicit formatter configured (no `.prettierrc` or ESLint config detected)
+- Appears to follow Next.js default conventions
+- Spacing: 2-space indentation (observed in all files)
+- Trailing semicolons: used consistently
+- Quotes: double quotes for strings, single quotes avoided
 
 **Linting:**
-- Command: `npm run lint` → `next lint` (`package.json`).
-- `eslint` ^9 is a devDependency; **no** `eslint.config.*` or `.eslintrc*` in repo—rules come from Next.js ESLint integration when you run `next lint`.
-- Add a flat config only if you need project-specific rules; until then, follow `AGENTS.md` and patterns below.
+- ESLint v9 installed but no configuration file present
+- Relies on `next lint` command from package.json
+- Next.js provides default linting rules
+
+**Code organization:**
+- Imports grouped logically: React/Next imports first, then third-party libraries, then local imports
+- Path aliases used throughout: `@/` points to `src/` directory
+- "use client" directive at top of client components (e.g., `HeroImages.jsx`, `ValidationSection.jsx`)
+- Server-side functions/data fetching at top level (e.g., `app/page.jsx` uses `async` function, `getPosts()`)
 
 ## Import Organization
 
-**Order (prescriptive, per `AGENTS.md`):**
-1. React / `react/*`
-2. Next.js (`next/image`, etc.)
-3. Third-party (`gsap`, `@gsap/react`, UI libs)
-4. Local: `@/…` alias then relative (`./SplitText`)
+**Order:**
+1. React and Next.js imports (e.g., `import { useRef, forwardRef } from "react"`)
+2. Third-party libraries (e.g., `import gsap from "gsap"`, `import Link from "next/link"`)
+3. Local components (e.g., `import { SkipButton } from "@/components/SkipButton"`)
+4. Local utilities/hooks (e.g., `import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion"`)
 
-**Path aliases:**
-- `@/*` → `src/*` via `jsconfig.json` (`compilerOptions.paths`).
+**Path Aliases:**
+- `@/` maps to `src/` directory
+- Used consistently for all local imports
+- Examples: `@/components/`, `@/lib/`, `@/app/`
 
-**Exports:**
-- Named exports for shared components: `export const HeroSection = …` in `src/components/HeroSection.jsx`.
-- Default exports for App Router pages: `export default function Page()` in `src/app/**/page.jsx`.
+**Barrel Files:**
+- Index files used in `ui/` and `shadcn-studio/` directories
+- Export components/subcomponents from central location
+- Example: `src/components/shadcn-studio/button/index.js` exports button variants
 
 ## Error Handling
 
-**Strategy:** Graceful degradation for CMS/network; log with `console.error`, return safe fallbacks (empty arrays, boolean false).
+**Patterns:**
+- **Try-catch with fallback**: Used in server-side data fetching (e.g., `wordpress.js`)
+  ```javascript
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`Error: ${response.status}`);
+      // Fallback logic or return empty/default
+      return [];
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error message:', error);
+    return null; // or [] or default value
+  }
+  ```
 
-**Patterns (match `src/lib/wordpress.js`):**
-- Wrap `fetch` in `try/catch`; on failure log context (status, URL snippet) and return `[]` or `false` rather than throwing to the UI layer.
-- Use `fetchWithTimeout` + `AbortController` for bounded waits; treat `AbortError` distinctly when needed.
-- On non-OK responses, attempt fallbacks when documented (e.g., retry without `_embed` on 403).
-- Parse helpers: validate shapes (e.g., `Array.isArray(data)`) before use.
+- **Graceful degradation**: External API failures don't crash the app
+  - WordPress integration in `src/lib/wordpress.js` returns empty array on failure
+  - `getPosts()` returns `[]` if API unavailable
+  - `getPostBySlug()` returns `null` if post not found
 
-**UI:**
-- Guard renders with null/undefined checks; avoid crashing on missing WordPress fields.
+- **Timeout handling**: Fetch requests use abort controller for timeout
+  ```javascript
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+  ```
 
-**Logging:**
-- Prefer `console.error` for failures; `AGENTS.md` says avoid `console.log` in production-facing noise—use errors for diagnosable paths.
+- **Ref safety checks**: Guard against null refs before using
+  ```javascript
+  if (!sectionRef.current) return;
+  if (!horizontalScrollRef.current || !shutterRef.current) return;
+  ```
+
+- **Type safety in DOM access**: Check element existence before accessing properties
+  ```javascript
+  if (shutterRef.current?.children) {
+    gsap.set(shutterRef.current.children, {...});
+  }
+  ```
+
+## Logging
+
+**Framework:** `console` native methods (no external logging library)
+
+**Patterns:**
+- `console.error()` for failures (e.g., API errors, timeouts)
+- `console.warn()` for non-critical issues (e.g., fallback behavior)
+- `console.log()` avoided in production code (no examples found)
+- Error context included: error message + context (URL, response status)
+
+**Examples from `wordpress.js`:**
+```javascript
+console.error('WordPress connection test timed out');
+console.error(`WordPress API error: ${response.status} - ${response.statusText}`);
+console.error(`URL: ${url}`);
+console.warn('Attempting fetch without _embed parameter...');
+```
 
 ## Comments
 
-**When to comment:**
-- Section markers for animation blocks (e.g., `// --- 1. INITIAL ANIMATE IN ---`) per `AGENTS.md`.
-- Explain non-obvious behavior (session intro skip, Lenis vs native scroll) where logic is dense.
+**When to Comment:**
+- Algorithm explanation or non-obvious logic (e.g., GSAP animation phases)
+- Configuration decisions (e.g., "OPTIMIZATION: Use swap for font loading")
+- References to external patterns (e.g., "Graphite.com-style scrolling")
+- Warning about browser/environment limitations
+- Workaround explanations (e.g., sessionStorage hydration mismatch)
 
-**TODO/FIXME:** Use sparingly; link issues when adding debt.
+**JSDoc/Comments:**
+- Block comments used for sections (e.g., `// PHASE 1: THE SWOOP`)
+- Inline comments for specific lines when context is non-obvious
+- Component comments explain purpose and constraints
+- Configuration comments explain why decisions were made
 
-## Component & Animation Conventions
+**Examples:**
+```javascript
+// OPTIMIZATION: Check sessionStorage only on client side to prevent hydration mismatch
+// PHASE 1: THE SWOOP (White -> Black) - Run immediately on mount
+// Register ScrollTrigger safely (avoiding SSR errors)
+// Wait for all refs to be ready
+```
 
-**Client components:** `"use client";` at top when using hooks, GSAP, or browser APIs (`src/components/HeroSection.jsx`).
+## Function Design
 
-**Refs:** `forwardRef` for components that expose DOM refs; combine with inner `useRef` when needed.
+**Size:** Functions kept focused and single-purpose
+- Animation setup isolated in `useGSAP()` hooks
+- Data fetching in separate utility functions
+- Component rendering logic separated from animation setup
+- Typical function length: 20-100 lines for component logic, 10-30 for utilities
 
-**GSAP:** `useGSAP` from `@gsap/react` with `{ scope: containerRef }`; register `ScrollTrigger`; animate transform/opacity only; cleanup via hook—see `AGENTS.md` examples.
+**Parameters:**
+- Destructuring used for component props
+- Default parameters for optional values
+- Props fallback to defaults within component when not passed
+- Example:
+  ```javascript
+  export function SplitText({
+    children,
+    className = "",
+    wordClass = "split-word",
+    charClass = "split-char",
+  }) { ... }
+  ```
 
-**Styling:** Tailwind CSS v4 utilities; shared tokens/custom layers in `src/app/globals.css`.
+**Return Values:**
+- React components: return JSX/null
+- Data fetchers: return data or empty array/null on failure
+- Hooks: return state, callbacks, or computed values
+- Utilities: return computed values or transformed data
 
 ## Module Design
 
-**Barrel files:** Some folders use `index.js` re-exports (e.g., `src/components/shadcn-studio/card/index.js`)—keep consistent within each feature folder.
+**Exports:**
+- Named exports preferred for components and functions
+- Default exports used for page routes
+- Example:
+  ```javascript
+  export function HeroSection() { ... }
+  export function PhilosophySection() { ... }
+  ```
 
-**State:** `useState` / `useRef` / `useEffect` for local concerns; `AGENTS.md` documents props drilling—note `zustand` is listed in `package.json` but not imported under `src/` (verify before introducing global stores).
+**Barrel Files:**
+- Used in `ui/` directory for component consolidation
+- Provide single import point for related components
+- Example: `src/components/ui/index.js` exports all UI primitives
+
+**Component Structure:**
+- State management (useState) at top
+- Effects/animations (useGSAP, useEffect) in middle
+- Render JSX at bottom
+- Helper components defined above main export
+
+## React Patterns
+
+**Client vs Server:**
+- "use client" directive for interactive components requiring hooks
+- Server components default for data fetching (app/page.jsx)
+- Lazy loading used for heavy components (e.g., HeroImages)
+  ```javascript
+  const HeroImages = lazy(() => import("@/components/HeroImages").then(mod => ({ default: mod.HeroImages })));
+  ```
+
+**Props:**
+- Functional components with destructured props
+- Forward refs used when parent access needed
+  ```javascript
+  export const HeroSection = forwardRef((props, ref) => {
+    const internalRef = ref || useRef(null);
+  });
+  ```
+
+**Suppression:**
+- `suppressHydrationWarning` used to suppress hydration mismatches (intended usage)
+- Applied to sections where client-only state doesn't affect markup
 
 ---
 
 *Convention analysis: 2026-03-21*
-*Update when patterns change*

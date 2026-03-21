@@ -4,146 +4,182 @@
 
 ## Tech Debt
 
-**Orphaned AI / chat dependencies:**
-- Issue: `package.json` includes `ai`, `@ai-sdk/openai`, and `zustand`, but there are no imports from these packages under `src/`. Git history indicates `src/app/api/chat/route.js` was removed, leaving no in-repo consumer for the AI SDK stack.
-- Why: Feature removal or migration without dependency cleanup.
-- Impact: Larger install surface, confusing audits, possible peer-dep pressure (project relies on `vercel.json` `installCommand` with `--legacy-peer-deps`).
-- Fix approach: Remove unused packages after confirming no planned chat route, or restore a single API route and wire imports intentionally.
+**Animation-Heavy Components & Memory Overhead:**
+- Issue: ValidationSection, ExpertiseSection, PhilosophySection, and BlogPreview all use complex GSAP timelines with ScrollTrigger, multiple staggered animations, and sessionStorage checks. These components run initialization timeouts (ValidationSection: 300ms delay, with ResizeObserver + window.addEventListener for reschedules).
+- Files: `src/components/ValidationSection.jsx` (332 lines), `src/components/ExpertiseSection.jsx` (256 lines), `src/components/PhilosophySection.jsx` (193 lines), `src/components/BlogPreview.jsx` (284 lines)
+- Impact: Animation setup delays (300ms setTimeout), multiple ScrollTrigger instances competing for DOM measurement cycles, potential jank on lower-end devices. ResizeObserver triggers rapid re-layouts.
+- Fix approach: Consolidate animation registration into a single manager per page, debounce ScrollTrigger.refresh() calls, consider intersection-based animation triggers as fallback for lower-end browsers, profile with DevTools to identify actual frame drops.
 
-**Likely-unused npm packages:**
-- Issue: The `array` package is listed in `package.json` but is not referenced in application code under `src/` (only the word "array" appears in comments in `src/lib/wordpress.js`).
-- Why: Leftover from an experiment or mistaken add.
-- Impact: Noise in dependency tree and supply-chain review scope.
-- Fix approach: `npm uninstall array` after verifying no dynamic `require`.
+**Console Logging Left in Production Code:**
+- Issue: WordPress.js module logs errors, warnings, and connection diagnostics directly to console. Blog pages also log errors. No centralized error handling or silent fail-safe for production.
+- Files: `src/lib/wordpress.js` (18 console statements across getPosts, getPostBySlug, testWordPressConnection), `src/app/blog/page.jsx`, `src/app/blog/[slug]/page.jsx`, `src/app/sitemap.js`
+- Impact: Exposed error details in browser console (API endpoints, timeouts, fallback attempts), unstructured logging makes debugging harder, no error tracking to identify issues pre-release.
+- Fix approach: Replace console.error/warn with conditional logging tied to environment variable (log in dev/staging, silent in prod). Integrate Sentry or similar error tracking for production failures. Wrap API errors in custom Error class with structured context.
 
-**Duplicate / experimental app trees at repo root:**
-- Issue: Untracked or parallel directories `ktg/`, `ktg2/`, `ktg3/` contain copies of pages and components (e.g. `ktg/mnt/user-data/outputs/blog/[slug]/page.jsx`, `ktg2/page.jsx`). The production app lives under `src/` per `jsconfig.json` path alias `@/*` → `./src/*`.
-- Why: Export or scaffold experiments checked into the same repo.
-- Impact: Editors and searches surface wrong files; risk of editing a dead copy; merge/confusion for future agents.
-- Fix approach: Move experiments to a branch, archive folder outside the Next app root, or delete after diffing against `src/`.
-
-**Project memory guide empty:**
-- Issue: `openmemory.md` at the repository root is empty.
-- Why: Guide not yet populated per project conventions.
-- Impact: Onboarding and cross-session continuity rely on `AGENTS.md` and code only.
-- Fix approach: Populate the guide as components and integrations stabilize (per workspace rules).
-
-**WordPress fetch timeout inconsistency:**
-- Issue: `src/lib/wordpress.js` defines `fetchWithTimeout` (10s) for connection tests and 403 fallbacks, but primary `getPosts` / `getPostBySlug` use plain `fetch` without `AbortSignal`, so a hung upstream can block SSR/build longer than the documented timeout.
-- Why: ISR `next: { revalidate: 60 }` path may have been added without unifying timeout behavior.
-- Impact: Slow or stuck WordPress can delay page generation and sitemap builds.
-- Fix approach: Route all WordPress calls through `fetchWithTimeout` (or shared wrapper) with consistent abort and logging.
+**SessionStorage Dependency for Animation State:**
+- Issue: ValidationSection, ExpertiseSection, BlogPreview, HeroImages all use sessionStorage to skip animations on revisit (setItem on animation complete, check on mount). This couples UI state to browser storage and doesn't account for tab refresh or navigation patterns.
+- Files: `src/components/ValidationSection.jsx` (lines 67-71, 97), `src/components/ExpertiseSection.jsx` (lines 46-51, 96), `src/components/BlogPreview.jsx` (lines 29-33, 92), `src/components/HeroImages.jsx` (lines 149-153)
+- Impact: Animation skipping is fragile (sessionStorage can be cleared by users), inconsistent UX (some tabs animate, some don't), no server-side awareness of animation state, difficult to test animation logic.
+- Fix approach: Move animation control to React state with URL search param or route tracking (e.g., `?_anim=done`), use React context to share animation state across page, or implement server-side preference tracking if user is logged in.
 
 ## Known Bugs
 
-**Sitemap may omit posts beyond the first 100:**
-- Symptoms: `/sitemap.xml` lists at most 100 blog URLs from `getPosts(1, 100)` in `src/app/sitemap.js`.
-- Trigger: More than 100 published posts in WordPress with newer posts beyond the first page of the REST response order.
-- Workaround: None for discoverability; SEO may miss URLs.
-- Root cause: Single-page fetch with no pagination loop.
-- Blocked by: None; fix is incremental fetches or WP endpoint that returns all slugs.
+**WordPress API Timeout Fallback Not Guaranteed:**
+- Symptoms: Blog pages show "System awaiting input from WordPress..." when getPosts() returns empty array. Fallback to fetch without `_embed` parameter only triggers on 403 status, but other timeout/connection errors return empty array silently.
+- Files: `src/lib/wordpress.js` (lines 40-101 in getPosts, 104-160 in getPostBySlug)
+- Trigger: Network timeout, DNS failure, WordPress server 500 error, or intermittent 403 from shared hosting
+- Workaround: Restart WordPress site or clear Vercel cache to force revalidate. Manual POST to blog page should trigger revalidate = 60.
 
-**Build-time static params depend on live WordPress:**
-- Symptoms: `generateStaticParams` in `src/app/blog/[slug]/page.jsx` calls `getPosts(1, 20)`; if the API fails during build, params return `[]` and fewer routes are pre-rendered (mitigated by `dynamicParams = true`).
-- Trigger: WordPress down or blocked during CI/build.
-- Workaround: On-demand ISR still builds missing slugs at runtime when the API is healthy.
-- Root cause: No persisted slug list for build-only use.
+**ResizeObserver Setup Timing Issue in ValidationSection:**
+- Symptoms: Horizontal scroll animation may not fire immediately on mount if layout is still settling. Console warns "[ValidationSection] No horizontal overflow yet — layout may still be settling."
+- Files: `src/components/ValidationSection.jsx` (lines 123-161, particularly line 141)
+- Trigger: Fast renders or when browser hasn't measured layout yet (typically doesn't happen in normal navigation, but possible on very slow devices or during SSR->CSR hydration)
+- Workaround: Scroll trigger is re-armed by ResizeObserver, so scrolling down then up again forces re-calculation.
+
+**HeroImages Canvas Texture Loading Race Condition:**
+- Symptoms: On desktop, isReady state may set before textures finish loading, causing opacity fade-in to complete before material is ready. Textures load async in useEffect Promise.all().
+- Files: `src/components/HeroImages.jsx` (lines 93-105, 173)
+- Trigger: Slow network, large image files, or rapid component mount/unmount
+- Workaround: Textures load in background after fade-in completes, so visual pop-in is minimal.
 
 ## Security Considerations
 
-**Rendered WordPress HTML without sanitization:**
-- Risk: `post.content.rendered` is injected with `dangerouslySetInnerHTML` in `src/app/blog/[slug]/page.jsx`. JSON-LD uses `JSON.stringify` in a script tag (safe for JSON-LD). If the WordPress site is compromised or a malicious post is published, script-bearing HTML could execute in the browser context.
-- Current mitigation: Trust boundary is the self-hosted WordPress instance and editorial access; content is first-party CMS output.
-- Recommendations: Keep WP hardened (roles, plugins), consider server-side sanitization (e.g. `isomorphic-dompurify` or allowlist) for HTML bodies, or render via a constrained rich-text pipeline.
+**WordPress API URL Exposed in Client Code:**
+- Risk: NEXT_PUBLIC_WORDPRESS_URL is hardcoded as a public env var and visible in browser Network tab. CORS or rate limiting could allow DDoS.
+- Files: `src/lib/wordpress.js` (line 2), also passed to Image component in BlogPreview
+- Current mitigation: Firewall rules on WordPress host (presumably configured), ISR caching reduces repeated hits
+- Recommendations: Wrap WordPress fetches through Next.js API route (e.g., `/api/posts`) to hide origin URL and add rate limiting. Use `dangerouslySetInnerHTML` in blog page (line 69) is safe (trusted schema.org JSON-LD), but verify no user-generated content is injected.
 
-**Public WordPress URL in client bundle:**
-- Risk: `NEXT_PUBLIC_WORDPRESS_URL` falls back to a default host in `src/lib/wordpress.js` (visible in client/server bundles). This exposes which origin is queried (not secret, but fixed infrastructure detail).
-- Current mitigation: Override via env in production for flexibility.
-- Recommendations: Set explicit `NEXT_PUBLIC_WORDPRESS_URL` in Vercel env; avoid relying on the baked-in default long term.
-
-**No application-level authentication:**
-- Risk: Site is public marketing/blog; no user sessions in `src/`. If future admin or API routes are added, they must not follow “client-only” checks.
-- Current mitigation: N/A for current scope.
-- Recommendations: Use Next.js `middleware` and server-only secrets for any future protected routes.
+**dangerouslySetInnerHTML for JSON-LD:**
+- Risk: JSON-LD is trusted schema.org content, but if post.title or post.url ever comes from untrusted source, XSS is possible.
+- Files: `src/app/blog/page.jsx` (line 69)
+- Current mitigation: WordPress API provides raw title/slug, assuming sanitized on WordPress side
+- Recommendations: Add explicit sanitization layer for post.title and post.slug before JSON-LD injection, or move JSON-LD generation to server-side metadata export.
 
 ## Performance Bottlenecks
 
-**WebGL hero (`HeroImages.jsx`):**
-- Problem: Three.js + `@react-three/fiber` canvas runs on the home hero after lazy load (`src/components/HeroSection.jsx`).
-- Measurement: Not captured in-repo (no perf budgets or RUM thresholds checked in).
-- Cause: GPU shader work and texture uploads per session on first paint of hero.
-- Improvement path: Offer reduced-motion path (respect `prefers-reduced-motion`), cap DPR on low-end devices, or static fallback image for repeat visits.
+**Continuous requestAnimationFrame in GlobalCursor:**
+- Problem: animate() runs in requestAnimationFrame loop even when user is not moving mouse. Performs DOM writes (transform style updates) 60fps continuously.
+- Files: `src/components/GlobalCursor.jsx` (lines 25-37, 41)
+- Cause: RAF always re-schedules itself; no check to pause when mouse hasn't moved
+- Improvement path: Add `isMoving` flag (like CursorDot), pause RAF when idle, resume on mousemove. Expected savings: 60 layout/composite ops/sec when static.
 
-**Scroll stack complexity (Lenis + GSAP + ScrollTrigger):**
-- Problem: `src/libs/lenis.jsx` wires Lenis to GSAP ticker, `ScrollTrigger.scrollerProxy`, and exposes `window.lenis` for `SkipButton` / `HeroSection`.
-- Measurement: Not instrumented in-repo.
-- Cause: Tight coupling between smooth scroll and animation timelines; order of registration matters.
-- Improvement path: Centralize scroll integration tests (even smoke in browser), document teardown expectations when adding new `ScrollTrigger` sections.
+**Excessive GSAP gsap.set() Calls in CursorDot Animation Loop:**
+- Problem: render() function calls gsap.set() for EVERY dot on EVERY frame (12 dots * 60fps = 720 property updates/sec). gsap.set() includes property interpolation and cache invalidation.
+- Files: `src/components/CursorDot.jsx` (lines 42-48, 61-67)
+- Cause: Using GSAP for immediate positional updates instead of CSS transforms or direct style mutation
+- Improvement path: Replace gsap.set() calls with direct `el.style.transform = '...'` for position-only updates, reserve GSAP for actual tweens (fade in/out). Expected savings: ~80% reduction in JS execution time during render loop.
 
-**WordPress ISR vs freshness:**
-- Problem: Posts use `revalidate = 60` and fetches use `next: { revalidate: 60 }` in `src/lib/wordpress.js` and `src/app/blog/[slug]/page.jsx`.
-- Measurement: Depends on traffic and CDN; not logged here.
-- Cause: Cached responses may lag CMS edits by up to a minute.
-- Improvement path: Use `revalidatePath` / webhook from WordPress on publish if near-real-time updates are required.
+**Multiple ScrollTrigger Instances Without Consolidation:**
+- Problem: ValidationSection creates 1 ScrollTrigger, ExpertiseSection creates 1, PhilosophySection creates multiple (per quote element). Each trigger has its own invalidateOnRefresh logic and recalculation budget.
+- Files: Multiple component files with ScrollTrigger usage
+- Cause: Component-level architecture doesn't share trigger context
+- Improvement path: Create a central ScrollTrigger manager or use Lenis scroll listener instead of scrub-based triggers for smoother interaction. Profile to quantify impact.
+
+**Blog Images Not Lazy-Loaded Initially:**
+- Problem: BlogPreview maps posts and creates Image components; first 3 use loading="eager", but many images are below fold and still preload due to horizontal scroll layout.
+- Files: `src/components/BlogPreview.jsx` (line 193)
+- Cause: Horizontal scroll pattern hides images off-screen, but browser still fetches them
+- Improvement path: Implement scroll-aware lazy loading with Intersection Observer, or rely on browser native lazy-loading with loading="lazy" for below-fold images.
 
 ## Fragile Areas
 
-**GSAP sections with horizontal scroll and ref timing (`ValidationSection.jsx`):**
-- Why fragile: Multiple refs, `sessionStorage` for animation state, and `console.warn` paths when refs or horizontal content are missing suggest edge cases on fast navigation or layout shift.
-- Common failures: ScrollTrigger mis-measurement if images/fonts load late.
-- Safe modification: Change layout in small steps; run `ScrollTrigger.refresh()` after asset load if adding content above the section; test mobile and reduced viewport.
-- Test coverage: No automated tests (see Test Coverage Gaps).
+**BlogPreview Horizontal Scroll with Wheel Hijacking:**
+- Files: `src/components/BlogPreview.jsx` (lines 35-68)
+- Why fragile: Manually hijacks wheel events with preventDefault() and calculates boundary detection. Tolerance value (SCROLL_BOUNDARY_TOLERANCE = 2px) is magic number; may break on zoomed browsers or touch devices.
+- Safe modification: Test boundary conditions across zoom levels (75%, 100%, 125%), add debug logging for scroll position, consider using CSS scroll-snap and native overflow behavior instead of wheel hijacking.
+- Test coverage: No unit tests for scroll boundary logic; manual testing only.
 
-**Global `window.lenis` usage:**
-- Why fragile: `src/libs/lenis.jsx` assigns `window.lenis` for cross-component scroll control; any typo or double-mount can leave stale references.
-- Common failures: SSR/hydration already guarded by client components; risk is mostly runtime ordering.
-- Safe modification: Prefer React context or a small module singleton if refactoring; keep cleanup in `useEffect` return.
-- Test coverage: None.
+**ExpertiseSection Stat Counter Animation with data- Attributes:**
+- Files: `src/components/ExpertiseSection.jsx` (lines 149-169)
+- Why fragile: Uses data-val, data-is-float, data-suffix HTML attributes as configuration for counter animation. If markup changes or attribute is missing, counter silently skips. Line 152 checks `data-animated` flag to prevent double-run, but this flag persists across component remounts.
+- Safe modification: Move counter config to explicit data object prop, pass formatters as functions, reset `data-animated` flag on cleanup.
+- Test coverage: No validation that all counters animate; only manual visual inspection.
+
+**HeroImages Platform Detection with Inline Timeout:**
+- Files: `src/components/HeroImages.jsx` (lines 148-171)
+- Why fragile: Detects mobile via `window.innerWidth < 768`, but uses hard-coded 100ms timeout for mobile to setIsReady. Timeout is arbitrary and may not account for slow devices or async resource loading.
+- Safe modification: Use Intersection Observer or resource load completion event instead of fixed timeout; query window.matchMedia for media query consistency.
+- Test coverage: No responsive testing automation.
+
+**ValidationSection Shutter Animation Depends on Ref Order:**
+- Files: `src/components/ValidationSection.jsx` (lines 74-99)
+- Why fragile: Initial check `if (!horizontalScrollRef.current || !shutterRef.current || !cardRef.current) { return; }` returns early, but setTimeout might run before refs are populated. Animations are queued without error boundaries.
+- Safe modification: Use optional chaining consistently, add try-catch around animation setup, ensure refs are fully initialized before any GSAP calls.
+- Test coverage: No unit tests for ref initialization order.
 
 ## Scaling Limits
 
-**WordPress REST as single content bottleneck:**
-- Current capacity: Rate limits and PHP worker limits depend on Hostinger/WordPress plan (not documented in-repo).
-- Limit: Traffic spikes or slow REST responses affect Next.js page generation and ISR.
-- Symptoms at limit: Timeouts, empty blog arrays, empty sitemap entries for posts.
-- Scaling path: Edge cache HTML aggressively, add CDN in front of WP, or increase WP tier; consider GraphQL or dedicated headless plugin if API becomes hot.
+**ISR Revalidate at 60 Seconds:**
+- Current capacity: Vercel ISR regenerates blog page every 60 seconds (set in `src/app/blog/page.jsx` line 11). For high-traffic sites with frequent posts, this may cause stale content or regeneration storms.
+- Limit: ~1,440 regenerations per day per route. If 10 routes + manual edits, can trigger Vercel's cost limits.
+- Scaling path: Implement webhook-based on-demand revalidation from WordPress (when post is published), use fine-grained ISR with stale-while-revalidate headers, or move to fully dynamic blog with caching layer.
 
-**GitHub Actions vs Vercel install flags:**
-- Current capacity: `.github/workflows/deploy.yml` runs `npm ci` then `npm run build` without `--legacy-peer-deps`; `vercel.json` uses `npm install --legacy-peer-deps`.
-- Limit: Lockfile/peer resolution differences can cause CI pass/fail to diverge from Vercel.
-- Symptoms at limit: CI fails on peer conflicts while Vercel succeeds (or vice versa).
-- Scaling path: Align install command (e.g. `npm ci --legacy-peer-deps` if required) or resolve peer dependencies so legacy flag is unnecessary.
+**WordPress API Pagination Implicit (No Page Param Passed):**
+- Current capacity: getPosts() defaults to page 1, perPage 10. Home page requests 6 posts. Blog page requests all posts (default 10, no pagination UI).
+- Limit: WordPress hosts limited to ~10-20 posts per request depending on plan. No infinite scroll or pagination implemented.
+- Scaling path: Implement cursor-based pagination (pass offset) or keyset pagination (pass last_id), add pagination UI to blog list, implement infinite scroll for BlogPreview carousel.
 
 ## Dependencies at Risk
 
-**Peer-deps workaround (`--legacy-peer-deps`):**
-- Risk: Documented as required in `vercel.json` and `AGENTS.md`; indicates dependency tree tension (React 19 + ecosystem).
-- Impact: Future major upgrades may require manual resolution.
-- Migration plan: Periodically run `npm ls` and upgrade stacks together; aim to remove `--legacy-peer-deps` when peers align.
+**GSAP + ScrollTrigger Heavy Dependency:**
+- Risk: GSAP is ~50KB gzipped; ScrollTrigger adds complexity. Upgrade 3.13 → 4.x planned; API may break.
+- Impact: Complex scroll-linked animations would need refactoring if GSAP is removed or major version is skipped.
+- Migration plan: Gradually replace GSAP tweens with CSS Transitions for simple properties (opacity, transforms), use Framer Motion or React Spring for complex animations, keep GSAP only for ScrollTrigger-specific logic. Consider pure CSS scroll-driven animations (CSS Scroll Snap) as fallback.
+
+**Three.js + React Three Fiber for HeroImages:**
+- Risk: Three.js ~600KB, adds significant bundle size for single shader-based reveal effect. Maintenance burden for Three.js version compatibility.
+- Impact: Desktop users on slower connections experience longer initial paint; mobile doesn't use Three.js (fallback to CSS background image), creating code path divergence.
+- Migration plan: Replace Three.js shader with CSS mask-image and CSS filter effects, or use Wistia/Cloudinary image transform API. Eliminates 600KB overhead.
+
+**Zustand State Management (Installed but Not Evident):**
+- Risk: package.json lists zustand 4.5.7, but no grep matches in src code. Either unused dependency or store not exported/used correctly.
+- Impact: Dead code weight (~3KB), maintenance confusion
+- Migration plan: Audit for actual Zustand usage, remove if unused. If store is planned, implement centralized animation state store (replaces sessionStorage).
 
 ## Missing Critical Features
 
-**Automated tests:**
-- Problem: No `*.test.*` or `*.spec.*` files detected under the repo; `AGENTS.md` states no test framework is configured.
-- Current workaround: Manual QA and `npm run build` / lint in CI.
-- Blocks: Regressions in GSAP, routing, or WordPress integration are caught late.
-- Implementation complexity: Medium (choose Vitest or Playwright for smoke, mock WP or use staging URL).
+**No Error Boundary Component:**
+- Problem: If any animation setup throws (e.g., GSAP plugin registration fails), entire page crashes. No fallback UI.
+- Blocks: Graceful degradation on older browsers, recovery from animation library errors
+- Recommendation: Wrap all GSAP-heavy sections in React Error Boundary, provide fallback render that skips animations.
+
+**No Test Suite:**
+- Problem: 43 source files, 0 test files. No unit, integration, or E2E tests detected.
+- Blocks: Refactoring animation logic (risky), regression detection on upgrades, CI/CD confidence
+- Recommendation: Set up Vitest + React Testing Library, add tests for: animation state transitions, ref initialization, sessionStorage logic, WordPress API mocking, responsive breakpoints.
+
+**No Performance Monitoring:**
+- Problem: No Lighthouse CI, Web Vitals collection, or real-user monitoring (RUM). Animation performance blind spot.
+- Blocks: Data-driven optimization decisions, customer-facing performance SLA
+- Recommendation: Add @vercel/speed-insights (already in package.json but not integrated), set up Sentry for error + performance monitoring, configure Lighthouse CI in CI/CD.
 
 ## Test Coverage Gaps
 
-**WordPress client (`src/lib/wordpress.js`):**
-- What's not tested: Error branches, 403 fallback, non-array JSON, timeout behavior.
-- Risk: Silent empty blog or wrong ISR behavior after API changes.
-- Priority: High for content-dependent revenue/SEO.
-- Difficulty to test: Requires HTTP mocking or contract tests against a fixture JSON.
+**Animation State Persistence Logic (sessionStorage):**
+- What's not tested: Interaction between multiple animated sections on same page, order of animation completion, cross-tab sessionStorage sync
+- Files: ValidationSection, ExpertiseSection, BlogPreview, HeroImages (all using sessionStorage pattern)
+- Risk: Animation may play twice on page reload, or not at all on browser back navigation
+- Priority: High (impacts user experience on every visit)
 
-**Animation and layout integration:**
-- What's not tested: Lenis + GSAP synchronization, hero lazy load, Validation section horizontal scroll.
-- Risk: Visual regressions and scroll jank on specific browsers.
-- Priority: Medium.
-- Difficulty to test: Typically E2E or visual snapshots, higher flake without stable selectors.
+**WordPress API Resilience:**
+- What's not tested: Timeout fallback logic (line 60-76 in wordpress.js), error message truncation, non-array response handling
+- Files: `src/lib/wordpress.js`
+- Risk: Silent failures, truncated error logs, 5xx errors not caught
+- Priority: High (blog unavailability is visible to users)
+
+**Responsive Image Scaling:**
+- What's not tested: Image srcset/sizes at different viewport widths, lazy-loaded images in carousel
+- Files: BlogPreview, blog/page.jsx, blog/[slug]/page.jsx
+- Risk: Oversized images on mobile, broken images due to lazy-load timing
+- Priority: Medium (affects mobile UX)
+
+**Scroll Boundary Detection (Wheel Hijacking):**
+- What's not tested: Scroll position at zoom levels, RTL layout, touch scroll simulation
+- Files: `src/components/BlogPreview.jsx` (lines 47-49)
+- Risk: Horizontal scroll breaks when browser is zoomed, or on tablets with touch
+- Priority: Medium (affects mobile scroll experience)
 
 ---
 
 *Concerns audit: 2026-03-21*
-*Update as issues are fixed or new ones discovered*

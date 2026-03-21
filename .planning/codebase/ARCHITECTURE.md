@@ -4,135 +4,227 @@
 
 ## Pattern Overview
 
-**Overall:** Next.js App Router full-stack frontend with a headless WordPress CMS
+**Overall:** Next.js App Router with Section-Based Page Layout + GSAP Animation Orchestration
 
 **Key Characteristics:**
-- Server Components by default; interactive UI isolated in `"use client"` components
-- Blog and SEO-critical routes fetch WordPress JSON via `fetch` in Server Components with ISR (`revalidate`)
-- Global shell: root layout wraps all pages in smooth-scroll (`ReactLenis`) and shared chrome (`Header` / `Footer` patterns per route)
-- No dedicated API layer in-repo for CMS: `src/lib/wordpress.js` calls WordPress REST directly from the server
+- Server-rendered pages with progressive client-side enhancements (hybrid SSR/Client)
+- Modular section components that manage their own animations and state
+- Scroll-driven animations using GSAP ScrollTrigger + Lenis for smooth scrolling
+- Global cursor and background effects using Three.js and canvas-based geometry
+- WordPress integration for dynamic content (blog posts)
 
 ## Layers
 
-**App Router (pages, layouts, metadata):**
-- Purpose: URL mapping, HTML shell, route-level `metadata` / `generateMetadata`, ISR configuration
-- Location: `src/app/`
-- Contains: `layout.jsx`, `page.jsx`, route segments (`blog/`, `expertise/`, `validation/`), `template.jsx`, `sitemap.js`
-- Depends on: `@/components/*`, `@/lib/wordpress`, Next.js (`next/font`, `next/image`, `next/link`, `next/navigation`)
-- Used by: HTTP requests to Vercel-hosted Next.js
+**Server Layer (App Router):**
+- Purpose: Handle page rendering, SSR data fetching, metadata generation
+- Location: `src/app/` (layout.jsx, page.jsx, blog routing)
+- Contains: Page routes, layouts, metadata, ISR configuration
+- Depends on: WordPress API client (`src/lib/wordpress.js`)
+- Used by: Browser requests, Next.js routing
 
-**Presentation & interaction (`components/`):**
-- Purpose: UI sections, animations, navigation, reusable primitives
-- Location: `src/components/`
-- Contains: Feature sections (`HeroSection.jsx`, `ExpertiseSection.jsx`, …), layout helpers (`ClientLayout.jsx`, `PageTransition.jsx`), `ui/` and `shadcn-studio/` building blocks
-- Depends on: GSAP (`@gsap/react`, `gsap`), Tailwind classes, Lenis via parent `ClientLayout`, occasionally `@/lib/utils` (`cn`)
-- Used by: App Router pages and layouts
+**Client Layer (Components):**
+- Purpose: Interactive UI, animations, event handling
+- Location: `src/components/` (marked with "use client")
+- Contains: Page sections (Hero, Expertise, Validation, Philosophy, Blog), UI primitives, animated elements
+- Depends on: GSAP, Lenis, Three.js, Radix UI primitives
+- Used by: Server components via composition, layout wrapping
 
-**Data & integration (`lib/`):**
-- Purpose: External HTTP integration and small pure helpers
-- Location: `src/lib/wordpress.js`, `src/lib/utils.js`
-- Contains: WordPress REST client (`getPosts`, `getPostBySlug`, `testWordPressConnection`), helpers (`getFeaturedImage`, `formatDate`), `cn()` for class merging
-- Depends on: `NEXT_PUBLIC_WORDPRESS_URL` (with fallback host in code), Next.js `fetch` caching (`next: { revalidate }`)
-- Used by: Server Components (`src/app/page.jsx`, `src/app/blog/*`, `src/app/sitemap.js`) and client components only for pure helpers imported from `wordpress.js` (e.g. `BlogPreview.jsx` uses `getFeaturedImage`, `formatDate`)
+**Utilities & Libraries:**
+- Purpose: Reusable functions, hooks, data clients
+- Location: `src/lib/` (utils, wordpress, usePrefersReducedMotion), `src/libs/` (lenis wrapper)
+- Contains: API clients, custom hooks, helper functions
+- Depends on: External APIs (WordPress), browser APIs (matchMedia)
+- Used by: Components and pages throughout the app
 
-**Scroll / animation bridge (`libs/`):**
-- Purpose: Integrate Lenis smooth scroll with GSAP `ScrollTrigger` ticker
-- Location: `src/libs/lenis.jsx`
-- Contains: `ReactLenis` wrapper wiring `gsap.ticker` and `ScrollTrigger.scrollerProxy`
-- Depends on: `lenis`, `gsap`, `gsap/ScrollTrigger`
-- Used by: `src/components/ClientLayout.jsx`
+**Styling Layer:**
+- Purpose: Theme configuration, CSS animations, Tailwind utilities
+- Location: `src/app/globals.css`, `tailwind.config.js`
+- Contains: CSS variables, animations, responsive breakpoints, design tokens
+- Depends on: Tailwind CSS, Tailwind plugins
+- Used by: All components via className attributes
 
 ## Data Flow
 
-**Homepage blog preview:**
+**Page Load (Home):**
 
-1. Request hits `src/app/page.jsx` (Server Component).
-2. Server calls `getPosts(1, 6)` in `src/lib/wordpress.js` (WordPress `/wp-json/wp/v2/posts` with `_embed`, ISR 60s).
-3. On failure, `blogPosts` stays `[]`; page still renders.
-4. Serialized props pass `posts` to client `BlogPreview` for animated grid; pure helpers from `wordpress.js` run on client for formatting and image URL.
+1. **Server renders layout** → loads global fonts (Syne, Inter), applies metadata, sets up viewport
+2. **Server fetches data** → `getPosts()` from WordPress API with timeout + fallback handling
+3. **Server renders page** → passes blog data to `BlogPreview`, wraps with sections
+4. **Client hydrates layout** → `ClientLayout` activates Lenis (smooth scroll) and GlobalCursor
+5. **Client mounts sections** → each component's `useGSAP` hook sets up ScrollTrigger animations
+6. **Scroll interaction** → GSAP ScrollTrigger listens to Lenis scroll, fires stagger animations
+7. **Session tracking** → sessionStorage flags prevent re-animating on return visits
 
-**Blog list (`/blog`):**
+**Blog Post Fetch (Server Side):**
 
-1. `src/app/blog/page.jsx` calls `getPosts()`.
-2. Posts rendered server-side; JSON-LD built inline for SEO.
-3. No client global state; links navigate to `/blog/[slug]`.
+1. Page mounts → `getPosts(page, perPage)` called with `next: { revalidate: 60 }` (ISR)
+2. Fetch with timeout controller (10s) to prevent hanging
+3. On error → fallback attempt without `_embed` parameter
+4. Return parsed JSON array or empty array on timeout/404
+5. `BlogPreview` component receives array and renders grid
 
-**Blog post (`/blog/[slug]`):**
+**User Interaction (Scroll):**
 
-1. `generateStaticParams` in `src/app/blog/[slug]/page.jsx` pre-builds slugs from first page of posts.
-2. `generateMetadata` and default export fetch `getPostBySlug(slug)`; missing post → `notFound()` from `next/navigation`.
-3. HTML body uses `dangerouslySetInnerHTML` for `post.content.rendered` (trusted CMS output pattern).
-
-**Sitemap:**
-
-1. `src/app/sitemap.js` merges static routes with dynamic URLs from `getPosts(1, 100)`.
-2. Errors in post fetch are logged; static routes still returned.
+1. Lenis intercepts scroll events → smooth easing applied
+2. Lenis sync'd with GSAP ticker → `gsap.ticker.add()` called every frame
+3. ScrollTrigger updates → reads scroll position from Lenis proxy
+4. Animations fire → character stagger, horizontal scroll, shutter animations
+5. sessionStorage updated → tracks which animations have played this session
 
 **State Management:**
-- No Redux/Zustand usage in `src/` (Zustand is listed in `package.json` but unused in application code).
-- Local UI state via React hooks in client components; server data fetched per request/route with ISR.
+
+- **Session-based animation state:** `sessionStorage` flags (intro-completed, expertise-revealed, validation-animated)
+- **Component-local state:** `useState` for hasPlayed, refRefs for GSAP targets
+- **Global window state:** `window.lenis` exposed for skip button access
+- **CSS variable state:** Theme colors, font variables via hsl(var(--name))
+- **No persistent client-side store:** Zustand listed in package.json but not actively used
 
 ## Key Abstractions
 
-**WordPress REST client:**
-- Purpose: Single integration point for posts and embedded media
-- Examples: `src/lib/wordpress.js`
-- Pattern: Async functions returning arrays/null; `console.error` on failure; empty array/null fallbacks for resilience
+**Section Component Pattern:**
 
-**Route-level ISR:**
-- Purpose: Balance freshness and performance for CMS-backed pages
-- Examples: `export const revalidate = 60` in `src/app/page.jsx`, `src/app/blog/page.jsx`, `src/app/blog/[slug]/page.jsx`
-- Pattern: Next.js incremental static regeneration on `fetch` options in `wordpress.js`
+- Purpose: Encapsulate animation logic + layout for each page region
+- Examples: `HeroSection`, `ValidationSection`, `PhilosophySection`, `ExpertiseSection`
+- Pattern:
+  - "use client" directive
+  - `useGSAP()` hook for animation setup
+  - `useRef()` for DOM targets
+  - Conditional animation based on `hasPlayed` sessionStorage flag
+  - ScrollTrigger + GSAP for complex animations
 
-**Client layout shell:**
-- Purpose: Smooth scroll + global cursor without blocking RSC tree
-- Examples: `src/components/ClientLayout.jsx`, `src/app/layout.jsx` (imports `ClientLayout`, `GeometricBackground`, `CursorDot`)
-- Pattern: Client boundary only where DOM/scroll behavior requires it
+**SplitText:**
 
-**Section components:**
-- Purpose: Composable homepage slices reused on dedicated routes (`expertise`, `validation`)
-- Examples: `src/components/ExpertiseSection.jsx`, `src/components/ValidationSection.jsx` used from `src/app/expertise/page.jsx` and `src/app/validation/page.jsx`
+- Purpose: Wrap text in character/word spans for GSAP character stagger animations
+- Location: `src/components/SplitText.jsx`
+- Pattern: Maps input string → words array → characters spans with `.split-char` class
+- Usage: `<SplitText>{text}</SplitText>` wraps text for character-by-character animation
+
+**GeometricBackground:**
+
+- Purpose: Persistent layered background with moving squares, grid, wireframes
+- Location: `src/components/GeometricBackground.jsx`
+- Pattern:
+  - Memoized to prevent re-renders
+  - Uses CSS animations (`@keyframes animate-square`)
+  - Fixed or absolute positioning (fixed on layout, absolute on sections)
+  - mix-blend-mode: difference for visual effect
+  - 12 animated squares (reduced from 21 for performance)
+
+**Lenis Scroll Bridge:**
+
+- Purpose: Sync smooth scroll (Lenis) with GSAP timeline updates
+- Location: `src/libs/lenis.jsx`
+- Pattern:
+  - Wraps ReactLenis component
+  - `gsap.ticker.add(update)` connects Lenis to GSAP frame loop
+  - `ScrollTrigger.scrollerProxy()` configures ScrollTrigger to read from Lenis
+  - Exposes `window.lenis` for programmatic scroll control
+  - Disables lagSmoothing to prevent desync
+
+**UI Component Library:**
+
+- Purpose: Reusable atomic components (button, card, badge, etc.)
+- Location: `src/components/ui/` (Radix UI + shadcn styled)
+- Pattern: Compound components with className merging (`cn()` utility)
+- Uses: `clsx` + `tailwind-merge` for conditional class composition
 
 ## Entry Points
 
-**Next.js application:**
-- Location: `package.json` scripts → `next dev` / `next build` / `next start`
-- Triggers: Local dev or Vercel production
-- Responsibilities: Bundle App Router tree from `src/app/`
+**Layout Root:**
 
-**Root layout:**
 - Location: `src/app/layout.jsx`
-- Triggers: Every document request
-- Responsibilities: Fonts (`next/font/google`), global CSS (`./globals.css`), default `metadata` / `viewport`, wraps children with `ClientLayout`, background, analytics (`SpeedInsights`), `CursorDot`
+- Triggers: Server-side on every request
+- Responsibilities:
+  - Google Fonts loading (Syne, Inter)
+  - Global metadata (title, description, OG tags)
+  - Viewport configuration
+  - Speed Insights integration
+  - Root `html/body` setup
+  - ClientLayout wrapper (Lenis + GlobalCursor)
+  - GeometricBackground + CursorDot rendered globally
 
-**Per-route transition template:**
-- Location: `src/app/template.jsx`
-- Triggers: Navigations between routes (nested under layout)
-- Responsibilities: Wraps route segments in `PageTransition` for enter/exit animation
+**Home Page:**
 
-**Sitemap generator:**
-- Location: `src/app/sitemap.js`
-- Triggers: `/sitemap.xml` request (Next.js metadata route convention)
-- Responsibilities: Merge static and WordPress-derived URLs
+- Location: `src/app/page.jsx`
+- Triggers: Route `/`
+- Responsibilities:
+  - Fetch blog posts from WordPress
+  - Compose sections in order (Hero → Expertise → Validation → Philosophy → Blog → Footer)
+  - Handle blog fetch errors gracefully
+  - Set ISR revalidation (60s)
+
+**Blog Listing:**
+
+- Location: `src/app/blog/page.jsx`
+- Triggers: Route `/blog`
+- Responsibilities: Fetch and display blog posts grid
+
+**Blog Dynamic Route:**
+
+- Location: `src/app/blog/[slug]/page.jsx`
+- Triggers: Route `/blog/:slug`
+- Responsibilities: Fetch single post, render article layout
+
+**Validation Page:**
+
+- Location: `src/app/validation/page.jsx`
+- Triggers: Route `/validation`
+- Responsibilities: Render validation section with audit mock data
+
+**Expertise Page:**
+
+- Location: `src/app/expertise/page.jsx`
+- Triggers: Route `/expertise`
+- Responsibilities: Render expertise section standalone
 
 ## Error Handling
 
-**Strategy:** Fail soft for CMS availability; fail hard for missing blog posts (404).
+**Strategy:** Graceful degradation - errors logged but don't crash the app
 
 **Patterns:**
-- `try/catch` around `getPosts` / `getPostBySlug` in pages; empty lists and `notFound()` for missing slugs
-- `wordpress.js` returns `[]` or `null` on HTTP errors; optional fallback fetch without `_embed` on 403
-- `console.error` for diagnostics (no structured logging service in-repo)
+
+- **WordPress API timeouts:** 10-second fetch timeout with AbortController, fallback to empty array
+- **API 403 errors:** Automatic retry without `_embed` parameter for stricter CORS
+- **Hydration mismatches:** `suppressHydrationWarning` on body/root, session state checks in `useEffect`
+- **Missing refs:** useGSAP early return if refs not ready, re-runs on state change
+- **Animation failures:** Conditional rendering skips animations on reduced-motion preference
+- **Three.js loading:** Lazy-loaded HeroImages component with Suspense fallback
 
 ## Cross-Cutting Concerns
 
-**Logging:** `console.error` / `console.warn` in `wordpress.js` and pages
+**Logging:**
 
-**Validation:** Response shape checks (`Array.isArray` for post lists); HTML from WordPress rendered with awareness of XSS tradeoffs (CMS-trusted content)
+- Strategy: `console.error()` and `console.warn()` for API issues, animation problems
+- Pattern: Error messages include context (URL, status, message)
+- Used in: `src/lib/wordpress.js` (fetch errors), ScrollTrigger warnings, resize observer issues
 
-**Authentication:** None for public portfolio; WordPress is read-only via public REST
+**Validation:**
 
-**Performance / UX:** `next.config.js` image `remotePatterns` for `ktg.one` and WordPress host; Lenis + GSAP ticker sync in `src/libs/lenis.jsx`
+- Strategy: Response shape validation before rendering
+- Pattern: Check `Array.isArray()` before passing to map, null checks for nested data
+- Used in: WordPress post responses, featured image extraction, date formatting
+
+**Authentication:**
+
+- Strategy: Public API access only (WordPress REST API, no auth required)
+- Pattern: Headers include User-Agent and Referer for compatibility
+- Used in: `src/lib/wordpress.js`
+
+**Motion Preferences:**
+
+- Strategy: Respect `prefers-reduced-motion` media query
+- Pattern: `usePrefersReducedMotion()` hook reads user preference, sections check before animating
+- Used in: `PhilosophySection`, CSS animations with `@media (prefers-reduced-motion: reduce)`
+- Implementation: Character stagger disabled, square animations slowed, scroll tweens paused
+
+**Performance Optimization:**
+
+- Memoization: `GeometricBackground`, `Header`, UI components
+- Lazy loading: `HeroImages` with Suspense
+- Code splitting: Next.js automatic route-based splitting
+- Image optimization: Remotepatterns configured, formats (avif, webp), deviceSizes defined
+- Animation optimization: `force3D: true` on tweens, `will-change` conditional, `contain: strict` on animated elements
+- CSS containment: Layout/paint containment on background squares to prevent reflow
 
 ---
 

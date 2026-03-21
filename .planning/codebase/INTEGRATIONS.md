@@ -4,83 +4,139 @@
 
 ## APIs & External Services
 
-**Headless CMS (WordPress):**
-- WordPress REST API — Blog posts and embedded media for the marketing site.
-  - Client: `fetch` in `src/lib/wordpress.js` (no WordPress PHP SDK).
-  - Base URL: `process.env.NEXT_PUBLIC_WORDPRESS_URL` with fallback to `https://lawngreen-mallard-558077.hostingersite.com` (same file).
-  - Endpoints: `/wp-json/wp/v2/posts` with `_embed` for featured images; slug queries for single posts; optional `testWordPressConnection()` against `/wp-json/wp/v2`.
-  - Caching: `next: { revalidate: 60 }` on main fetches (ISR-style revalidation, not `cache: 'no-store'` on the default path — see AGENTS.md vs implementation when changing freshness requirements).
-  - Headers: `User-Agent`, `Accept`, `Referer` set to reduce blocking; 403 fallback retries without `_embed`.
+**Content Management:**
+- WordPress REST API
+  - What it's used for: Blog post retrieval, featured images, post metadata
+  - Client: Native fetch (wrapped in `src/lib/wordpress.js`)
+  - Endpoints:
+    - `GET /wp-json/wp/v2/posts` - List posts with pagination
+    - `GET /wp-json/wp/v2/posts?slug={slug}` - Get single post by slug
+  - Response handling: Fallback to non-`_embed` variant if 403 error
+  - Cache strategy: ISR (Incremental Static Regeneration) with 60-second revalidation
+  - Error handling: Graceful timeout (10 seconds) with silent failure (returns empty array/null)
 
-**AI (optional / future):**
-- Vercel AI SDK — `ai` and `@ai-sdk/openai` in `package.json` for OpenAI-compatible providers; no active server routes or client imports under `src/` at analysis time. If reintroducing chat or streaming, add a Route Handler and document required env vars (e.g. `OPENAI_API_KEY`) in Vercel without committing values.
-
-**Fonts (Google):**
-- Google Fonts via `next/font/google` — `Syne` and `Inter` registered in `src/app/layout.jsx` (no runtime font CSS from external `<link>` tags).
+**AI/Language Models:**
+- OpenAI API
+  - SDK: `@ai-sdk/openai` 3.0.9
+  - Client: Vercel AI SDK (`ai` 6.0.5)
+  - What it's used for: Unknown (installed but no active usage detected in codebase)
+  - Auth: Likely `OPENAI_API_KEY` environment variable (not visible in source)
 
 ## Data Storage
 
 **Databases:**
-- None in-app — No Prisma, Drizzle, or SQL clients; content is fetched from WordPress over HTTPS.
+- None detected - Static/SSG architecture with external content source
 
 **File Storage:**
-- Static assets in `public/` (e.g. `public/assets/` referenced from metadata in `src/app/layout.jsx`).
-- WordPress-hosted media URLs returned through `_embedded` featured media and used with Next.js `Image` where applicable.
+- Hostinger-hosted WordPress media:
+  - Domain: `lawngreen-mallard-558077.hostingersite.com`
+  - Connection: HTTPS fetch
+  - Contains: Featured images and blog media
+- Local filesystem (public/assets):
+  - `/public/assets/` - SVG icons, OG images, other static assets
+  - Client: Next.js Static File Serving
 
 **Caching:**
-- Next.js fetch caching / ISR revalidation windows in `src/lib/wordpress.js` (`revalidate: 60`). No Redis or external cache.
+- Next.js ISR: 60-second revalidation for dynamic blog routes
+- GSAP animation caching: In-memory (ScrollTrigger instances)
+- Image caching: Browser cache + Vercel CDN (optimized images)
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- None for site visitors — No NextAuth, Clerk, or custom session code in `src/`. WordPress is read-only from the Next app’s perspective (public REST reads).
+- None detected - Static site, no user authentication system
+
+**Content Access:**
+- WordPress REST API: Public endpoint (no authentication required)
+- Vercel Speed Insights: Public token embedded in page
 
 ## Monitoring & Observability
 
-**Analytics / performance:**
-- Vercel Speed Insights — `@vercel/speed-insights/next` `SpeedInsights` component in `src/app/layout.jsx`.
+**Error Tracking:**
+- None detected (no Sentry, Bugsnag, or similar)
 
-**Error tracking:**
-- Not integrated — No Sentry or similar in `package.json` or `src/`.
+**Performance Monitoring:**
+- Vercel Speed Insights
+  - Integration: `@vercel/speed-insights` 1.2.0
+  - Component: `<SpeedInsights />` in `src/app/layout.jsx`
+  - Metrics tracked: Core Web Vitals (LCP, FID, CLS), page load times
+  - Data sent to: Vercel analytics endpoint
 
 **Logs:**
-- Application uses `console.error` / `console.warn` in `src/lib/wordpress.js` for API failures; no structured logging service.
+- Browser console: Standard `console.error()` and `console.warn()` for development
+- Server logs: Next.js built-in logging to stdout (Vercel capture)
+- WordPress API errors logged to console with full context (URL, status, response snippet)
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Vercel — `vercel.json` sets `framework: nextjs`, `regions: ["iad1"]`, `installCommand: npm install --legacy-peer-deps`.
+- Vercel - Primary deployment platform
+  - Edge Functions: Available (not currently used)
+  - Serverless Functions: Available (not currently used)
+  - Build Command: `next build`
+  - Start Command: `next start`
+  - Environment: Node.js 18+
 
 **CI Pipeline:**
-- GitHub Actions — `.github/workflows/deploy.yml` runs on `push`/`pull_request` to `main`: checkout, Node 20, `npm ci`, `npm run build`. (Does not deploy to Vercel by itself unless additional secrets/steps are added later.)
+- GitHub → Vercel automatic deployments
+  - Trigger: Push to main branch
+  - Preview deployments: Auto-generated for PRs
+  - Production: Manual or automatic on merge
+- Pre-deployment: ESLint checks (via `npm run lint`)
 
-**CLI:**
-- `npm run deploy` → `vercel --prod` (`package.json`).
+**Build Optimization:**
+- Turbopack enabled for faster rebuild times
+- CSS optimization enabled
+- Next.js image optimization
+- SWC compiler for faster transpilation
 
 ## Environment Configuration
 
-**Public / build-time variables (names only):**
-- `NEXT_PUBLIC_WORDPRESS_URL` — Override WordPress origin (`src/lib/wordpress.js`).
-- `NEXT_PUBLIC_SITE_URL` — Canonical site URL for SEO/sitemap (`src/app/sitemap.js`, `src/app/blog/page.jsx`, `src/app/blog/[slug]/page.jsx`); defaults to `https://ktg.one` if unset.
+**Required env vars:**
+```
+NEXT_PUBLIC_WORDPRESS_URL    # WordPress API endpoint (default: https://lawngreen-mallard-558077.hostingersite.com)
+NEXT_PUBLIC_SITE_URL         # Site canonical URL (default: https://ktg.one)
+OPENAI_API_KEY               # OpenAI API authentication (optional, likely not in use)
+```
 
-**Scripts:**
-- `SITE_URL` — Used by `scripts/scroll-screenshot.js` for Puppeteer target (defaults to `http://localhost:3000`).
+**Optional env vars:**
+- None documented
 
 **Secrets location:**
-- Production: Vercel project environment variables (dashboard). No `.env.example` committed in this exploration; document new vars there when adding AI or other backends.
-
-## Next.js Image & remote hosts
-
-**Remote image patterns:**
-- `next.config.js` `images.remotePatterns` allows `https://ktg.one` and `https://lawngreen-mallard-558077.hostingersite.com` (WordPress/media host alignment).
+- Vercel Project Settings → Environment Variables (encrypted at rest)
+- Local development: `.env.local` (not committed)
+- Build time: Injected via Vercel CLI deployment
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None — No `src/app/api/**/route.js` webhook handlers present for external services at analysis time.
+- None detected
 
 **Outgoing:**
-- Outbound HTTPS only — `fetch` to WordPress REST API from server components and server-side data paths; no user-configured outbound webhooks.
+- Vercel Speed Insights - Automatic performance data submission on each page load
+- WordPress REST API - One-directional reads (no write operations)
+
+## Image Delivery & CDN
+
+**Image Optimization Service:**
+- Vercel Image Optimization CDN
+  - Formats: AVIF (primary), WebP (fallback), original
+  - Device sizes: 640, 750, 828, 1080, 1200, 1920px
+  - Image sizes: 16, 32, 48, 64, 96, 128, 256px
+
+**Allowed remote hosts:**
+- `ktg.one` - Portfolio assets
+- `lawngreen-mallard-558077.hostingersite.com` - WordPress media
+
+## Third-Party Integrations Summary
+
+| Service | Purpose | Status | Critical |
+|---------|---------|--------|----------|
+| WordPress (Hostinger) | Blog content | Active | No (graceful degradation) |
+| OpenAI API | AI capabilities | Installed, unused | No |
+| Vercel Platform | Hosting + Speed Insights | Active | Yes |
+| Google Fonts | Typography | Active | Yes (with fallbacks) |
+| Vercel Analytics | Performance monitoring | Active | No |
 
 ---
 

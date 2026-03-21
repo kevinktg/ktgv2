@@ -5,72 +5,142 @@
 ## Languages
 
 **Primary:**
-- JavaScript (JSX) — Application code under `src/` (`.jsx` components and pages), Next.js App Router routes in `src/app/`, shared utilities in `src/lib/` and `src/components/`.
-
-**Secondary:**
-- CSS — Global styles and Tailwind v4 theme in `src/app/globals.css` (`@import "tailwindcss"`, `@theme`, `@layer`).
-- JSON — Configuration (`package.json`, `jsconfig.json`, `vercel.json`).
+- JavaScript (JSX) - React components and frontend logic
+- TypeScript - Optional, but configuration present via `@swc/core` transpilation
+- CSS - Tailwind CSS 4 + custom global styles
 
 ## Runtime
 
 **Environment:**
-- Node.js — CI uses Node 20 (`.github/workflows/deploy.yml`). No `engines` field in `package.json` and no `.nvmrc`; align local Node with CI (20.x) for parity.
+- Node.js 18+ (inferred from package dependencies and Next.js 16 requirements)
 
 **Package Manager:**
-- npm — Primary workflow: `package-lock.json` present; GitHub Actions runs `npm ci` (`.github/workflows/deploy.yml`).
-- `pnpm-lock.yaml` is also present at the repo root; treat as duplicate/secondary unless the team standardizes on pnpm (avoid mixing `npm ci` and `pnpm` without a decision).
+- npm
+- Lockfile: `package-lock.json` present
 
 ## Frameworks
 
 **Core:**
-- Next.js `^16.1.1` — App Router, `next build` / `next dev` (`package.json` scripts).
-- React `19.2.0` / `react-dom` `19.2.0` — UI layer.
+- Next.js 16.1.1 - Full-stack React framework with App Router
+  - Used for: Server-side rendering, static generation, API routes, image optimization
+- React 19.2.0 - UI library
+- React DOM 19.2.0 - DOM rendering
 
-**Testing:**
-- Not configured — No Jest/Vitest/Playwright in `package.json`; `AGENTS.md` documents manual testing only.
+**Animation & Graphics:**
+- GSAP 3.13.0 - Advanced animation library
+- @gsap/react 2.1.2 - React hook integration for GSAP
+- Three.js 0.182.0 - 3D graphics library
+- @react-three/fiber 9.5.0 - React renderer for Three.js
+- @react-three/drei 10.7.7 - Helper components for react-three-fiber
+- Lenis 1.3.15 - Smooth scroll library
+- @reactlenis component wrapper - Custom Lenis integration in `src/libs/lenis.jsx`
 
-**Build/Dev:**
-- Tailwind CSS `^4.1.18` with `@tailwindcss/postcss` — PostCSS pipeline in `postcss.config.mjs`.
-- `@tailwindcss/typography` (dev) — Typography plugin for prose-style content.
-- ESLint `^9` (dev) — Invoked via `npm run lint` (`next lint`). No committed `.eslintrc*` or `eslint.config.*` at repo root; Next.js supplies defaults unless extended later.
+**Scroll & UX:**
+- Simplex-noise 4.0.3 - Procedural noise for generative animations
+
+**UI Components:**
+- Radix UI:
+  - @radix-ui/react-navigation-menu 1.2.14
+  - @radix-ui/react-separator 1.1.8
+  - @radix-ui/react-slot 1.2.4
+- Lucide React 0.487.0 - Icon library
+- shadcn-studio components - Component library (custom implementations at `src/components/shadcn-studio/`)
+
+**Styling:**
+- Tailwind CSS 4.1.18 - Utility-first CSS framework
+- @tailwindcss/postcss 4.1.18 - PostCSS plugin for Tailwind
+- @tailwindcss/typography 0.5.19 - Typography plugin for blog content
+- class-variance-authority 0.7.1 - Variant management for components
+- clsx 2.1.1 - Conditional className utility
+- tailwind-merge 3.4.0 - Merge Tailwind classes safely
+
+**State Management:**
+- Zustand 4.5.7 - Lightweight state management (installed but minimal usage observed in codebase)
+
+**AI/Language Models:**
+- ai 6.0.5 - Vercel AI SDK
+- @ai-sdk/openai 3.0.9 - OpenAI provider for AI SDK
+
+**Performance:**
+- @vercel/speed-insights 1.2.0 - Web performance metrics integration
+
+**Build & Compilation:**
+- @swc/core 1.15.8 - Rust-based JavaScript compiler (transpiler)
+- @swc/cli 0.7.9 - CLI for SWC
+- @swc/helpers 0.5.18 - Runtime helpers for SWC transformations
+
+**Dev/Testing:**
+- ESLint 9 - JavaScript linter
+- Puppeteer 24.32.0 - Browser automation (for testing/debugging)
 
 ## Key Dependencies
 
 **Critical:**
-- `next`, `react`, `react-dom` — Core framework and rendering.
-- `gsap`, `@gsap/react` — Timeline and scroll-driven animation; used with ScrollTrigger patterns in components (see `src/components/`).
-- `lenis` — Smooth scrolling; integrated with GSAP in `src/libs/lenis.jsx` and wrapped in `src/components/ClientLayout.jsx`.
-- `@react-three/fiber`, `@react-three/drei`, `three` — WebGL/Three.js hero content (e.g. `src/components/HeroImages.jsx`).
-- `@radix-ui/react-*`, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react` — UI primitives and styling helpers under `src/components/ui/`.
+- Next.js 16.1.1 - Framework foundation; handles routing, SSR, ISR, image optimization
+- React 19 - Core UI rendering engine
+- GSAP + @gsap/react - Enables 60fps scrolling animations central to UX
+- Lenis - Smooth scroll hijacking for scroll-based interactions
 
-**Infrastructure / platform:**
-- `@vercel/speed-insights` — Vercel Speed Insights component in `src/app/layout.jsx`.
+**Animation & 3D:**
+- Three.js ecosystem - Enables 3D geometric background and interactive visuals
+- Simplex-noise - Procedural animation/texture generation
 
-**Declared but not referenced in `src/` (verify before relying on):**
-- `ai`, `@ai-sdk/openai` — Vercel AI SDK packages in `package.json`; no imports under `src/` at analysis time (historical chat API may have been removed; see git status for `src/app/api/chat/route.js`).
-- `zustand` — Listed in `package.json`; no `zustand` imports found under `src/`.
+**Styling & Components:**
+- Tailwind CSS 4 - Entire design system and utility-first styling
+- Radix UI - Accessible primitive components
 
-**Tooling (dev):**
-- `puppeteer` — Used by `scripts/scroll-screenshot.js` for local scroll/screenshot automation (not production runtime).
+**External Integration:**
+- @ai-sdk/openai - OpenAI API client (likely for future AI features; minimal usage detected)
+- @vercel/speed-insights - Observability/performance monitoring
 
 ## Configuration
 
 **Environment:**
-- Public configuration via `NEXT_*` variables (see `INTEGRATIONS.md`). Do not commit `.env` files; values belong in Vercel dashboard or local `.env.local` (gitignored if added).
+- Variables defined in `.env` (not visible; check `.env.example` or documentation)
+- Public vars prefixed with `NEXT_PUBLIC_`:
+  - `NEXT_PUBLIC_WORDPRESS_URL` - WordPress REST API endpoint (default: `https://lawngreen-mallard-558077.hostingersite.com`)
+  - `NEXT_PUBLIC_SITE_URL` - Site canonical URL (default: `https://ktg.one`)
 
 **Build:**
-- `next.config.js` — `outputFileTracingRoot` to lock tracing to this package root; `images.remotePatterns` for `ktg.one` and WordPress/media host; `turbopack.root`; `experimental.optimizeCss`; `reactStrictMode`.
-- `postcss.config.mjs` — Tailwind PostCSS plugin only.
-- `jsconfig.json` — Path alias `@/*` → `./src/*`.
+- `next.config.js` - Next.js configuration
+  - Image optimization with AVIF/WebP formats
+  - Remote image domains: `ktg.one`, `lawngreen-mallard-558077.hostingersite.com`
+  - Turbopack enabled for faster builds
+  - CSS optimization enabled
+- `tailwind.config.js` - Tailwind CSS customization with design tokens
+- `postcss.config.mjs` - PostCSS configuration (Tailwind v4 via `@tailwindcss/postcss`)
+- `jsconfig.json` - JavaScript module resolution with path aliases (`@/` for `src/`)
+
+**Linting:**
+- ESLint 9 configured (config file check for `.eslintrc.json`, `.eslintrc.js`)
 
 ## Platform Requirements
 
 **Development:**
-- Node.js 20.x recommended (matches CI).
-- `npm install` for local dev; Vercel production install uses `npm install --legacy-peer-deps` per `vercel.json` (resolve peer dependency conflicts the same way locally if builds diverge).
+- Node.js 18+
+- npm 8+
+- Browser with ES2020+ support
+- 2GB+ RAM for Next.js dev server + build
 
 **Production:**
-- Vercel — Next.js framework preset (`vercel.json`), region `iad1`, deploy script `npm run deploy` (`package.json`).
+- Deployment target: Vercel (primary; supports Node.js runtime)
+- Alternative: Any Node.js 18+ hosting (self-hosted with `next start`)
+- Environment: `NODE_ENV=production`
+
+## CDN & Asset Delivery
+
+**Images:**
+- Next.js Image Optimization CDN (Vercel)
+- Formats: AVIF, WebP with fallback to original
+- Sources:
+  - Local: `/public/assets/` (SVGs, screenshots)
+  - Remote: `ktg.one`, Hostinger WordPress media
+
+**Fonts:**
+- Google Fonts (via Next.js Font API):
+  - Syne: Display font (weights: 400, 700, 800)
+  - Inter: Body font (weights: 400)
+  - Font swap strategy for performance
 
 ---
 
