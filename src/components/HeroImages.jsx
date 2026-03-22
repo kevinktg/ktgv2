@@ -28,17 +28,12 @@ const circleRevealFragmentShader = `
 
     float dist = distance(center, mousePos);
 
-    float radius = 0.14;
-    float edgeSoftness = 0.09;
+    float radius = 0.06;
+    float edgeSoftness = 0.03;
     float reveal = 1.0 - smoothstep(radius, radius + edgeSoftness, dist);
 
-    // Cursor-relative shift (same for all pixels); layers diverge slightly = depth cue
-    vec2 m = (mouse - 0.5) * 2.0;
-    vec2 uvTop = clamp(vUv + m * uParallaxTop, vec2(0.0), vec2(1.0));
-    vec2 uvBottom = clamp(vUv + m * uParallaxBottom, vec2(0.0), vec2(1.0));
-
-    vec4 topColor = texture2D(topTex, uvTop);
-    vec4 bottomColor = texture2D(bottomTex, uvBottom);
+    vec4 topColor = texture2D(topTex, vUv);
+    vec4 bottomColor = texture2D(bottomTex, vUv);
 
     vec3 finalColor = mix(topColor.rgb, bottomColor.rgb, reveal);
     float finalAlpha = mix(topColor.a, bottomColor.a, reveal);
@@ -122,8 +117,8 @@ function RevealPlane({
     const targetX = (state.pointer.x + 1) / 2
     const targetY = (state.pointer.y + 1) / 2
 
-    materialRef.current.uniforms.mouse.value.x += (targetX - materialRef.current.uniforms.mouse.value.x) * 0.1
-    materialRef.current.uniforms.mouse.value.y += (targetY - materialRef.current.uniforms.mouse.value.y) * 0.1
+    materialRef.current.uniforms.mouse.value.x = targetX
+    materialRef.current.uniforms.mouse.value.y = targetY
     materialRef.current.uniforms.aspect.value = viewport.aspect
   })
 
