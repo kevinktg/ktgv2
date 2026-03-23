@@ -1,5 +1,6 @@
 import { Syne, Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ClientLayout } from "@/components/ClientLayout";
 import { GeometricBackground } from "@/components/GeometricBackground";
@@ -70,6 +71,7 @@ export default function RootLayout({ children }) {
           <GeometricBackground fixed />
 
           {children}
+          <Analytics />
           <SpeedInsights />
 
           {/* Global CursorDot - MUST be last to stay on top of all stacking contexts */}
