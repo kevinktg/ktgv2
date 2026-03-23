@@ -1,4 +1,3 @@
-import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
 import { HeroTransition } from "@/components/HeroTransition";
 import { ExpertiseSection } from "@/components/ExpertiseSection";
@@ -35,11 +34,6 @@ export default async function Home() {
       {/* Global background with gradient glow and grid - reactive to cursor */}
       <GeometricBackground fixed />
       
-      {/* Header is usually fixed/sticky.
-        Ensure it has z-50 to sit above the Hero canvas
-      */}
-      <Header />
-
       <main className="grow" suppressHydrationWarning>
 
         {/* HERO: Black Background with blob reveal cursor */}

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getPosts, formatDate, getFeaturedImage } from "@/lib/wordpress";
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 // OPTIMIZATION: 
@@ -62,8 +61,6 @@ export default async function BlogPage() {
 
   return (
     <div className="flex flex-col min-h-screen relative w-full bg-transparent">
-      <Header />
-      
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
