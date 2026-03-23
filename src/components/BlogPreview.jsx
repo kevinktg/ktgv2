@@ -92,10 +92,13 @@ export function BlogPreview({ posts = [] }) {
               .replace(/<[^>]*>/g, "")
               .substring(0, 120) + "...";
             const title = post.title?.rendered || post.title || 'Untitled';
-            const tier = tierPattern[index] || 'sm';
+
+            // Adjust tier if only 1 post to ensure it spans beautifully
+            const isSinglePost = posts.length === 1;
+            const tier = isSinglePost ? 'lg' : (tierPattern[index] || 'sm');
 
             // Grid span based on tier
-            const colSpan = tier === 'lg' ? 'md:col-span-8' : tier === 'md' ? 'md:col-span-4' : 'md:col-span-4';
+            const colSpan = isSinglePost ? 'md:col-span-12' : (tier === 'lg' ? 'md:col-span-8' : tier === 'md' ? 'md:col-span-4' : 'md:col-span-4');
             const imgHeight = tier === 'lg' ? 'h-64 md:h-80' : tier === 'md' ? 'h-48 md:h-56' : 'h-40 md:h-48';
 
             return (

@@ -20,7 +20,7 @@ export default async function Home() {
   let blogPosts = [];
   try {
     // Attempt to fetch posts. If WP is down, it won't crash the whole site.
-    blogPosts = await getPosts(1, 6);
+    blogPosts = await getPosts(1, 1);
   } catch (error) {
     // Continue - BlogPreview will show loading state
   }
