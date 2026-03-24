@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { ValidationSection } from "@/components/ValidationSection";
 import { BlogPreview } from "@/components/BlogPreview";
 import { GeometricBackground } from "@/components/GeometricBackground";
+import { CTASection } from "@/components/CTASection";
 import { getPosts } from "@/lib/wordpress";
 
 // Force dynamic rendering if you want new blog posts to appear instantly on refresh
@@ -20,7 +21,7 @@ export default async function Home() {
   let blogPosts = [];
   try {
     // Attempt to fetch posts. If WP is down, it won't crash the whole site.
-    blogPosts = await getPosts(1, 6);
+    blogPosts = await getPosts(1, 3);
   } catch (error) {
     // Continue - BlogPreview will show loading state
   }
@@ -65,6 +66,9 @@ export default async function Home() {
         {/* BLOG: Black Background (Grid Stagger) */}
         {/* We pass the server-fetched posts here */}
         <BlogPreview posts={blogPosts} />
+
+        {/* CTA SECTION: Form Card tied to Email */}
+        <CTASection />
 
       </main>
 
