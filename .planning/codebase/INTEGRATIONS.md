@@ -1,111 +1,150 @@
 # External Integrations
 
-**Analysis Date:** 2026-03-21
+**Analysis Date:** 2026-03-23
 
 ## APIs & External Services
 
-**Content Management:**
-- WordPress REST API
-  - What it's used for: Blog post retrieval, featured images, post metadata
-  - Client: Native fetch (wrapped in `src/lib/wordpress.js`)
-  - Endpoints:
-    - `GET /wp-json/wp/v2/posts` - List posts with pagination
-    - `GET /wp-json/wp/v2/posts?slug={slug}` - Get single post by slug
-  - Response handling: Fallback to non-`_embed` variant if 403 error
-  - Cache strategy: ISR (Incremental Static Regeneration) with 60-second revalidation
-  - Error handling: Graceful timeout (10 seconds) with silent failure (returns empty array/null)
+**AI Models:**
+- **Google Gemini API** — ulti-chat sub-app (`src/app/ulti-chat/app/page.tsx`)
+  - SDK/Client: `@google/genai` (1.17.0)
+  - Auth: `GEMINI_API_KEY` environment variable (injected by AI Studio at runtime)
+  - Usage: Chat interface with personas, prompt injection, skill system
+  - Endpoint: Google Gemini REST API
 
-**AI/Language Models:**
-- OpenAI API
-  - SDK: `@ai-sdk/openai` 3.0.9
-  - Client: Vercel AI SDK (`ai` 6.0.5)
-  - What it's used for: Unknown (installed but no active usage detected in codebase)
-  - Auth: Likely `OPENAI_API_KEY` environment variable (not visible in source)
+- **OpenAI API** — main app (imported but not actively used in current code)
+  - SDK/Client: `@ai-sdk/openai` (3.0.12) via Vercel AI SDK
+  - Library: `ai` (6.0.5) for streaming and tool calling
+  - Auth: Expected in `OPENAI_API_KEY` environment variable (not configured)
+  - Status: Available for future integration
+
+**External Content:**
+- **WordPress Blog** — main app (`src/lib/wordpress.js`)
+  - Host: `https://lawngreen-mallard-558077.hostingersite.com`
+  - Integration: REST API client with 10-second request timeout
+  - Auth: None (public API)
+  - Endpoints:
+    - `GET /wp-json/wp/v2/posts` — Fetch paginated blog posts
+    - `GET /wp-json/wp/v2/posts?slug={slug}` — Fetch single post by slug
+    - `GET /wp-json/wp/v2` — Connection test (health check)
+  - Features:
+    - Paginated fetches (10 posts per page default)
+    - Featured image extraction via `_embed` parameter (with fallback)
+    - ISR (Incremental Static Regeneration) — 60 second revalidation
+    - Error handling: Graceful 403 fallback (attempts request without `_embed`)
+  - Files: `src/lib/wordpress.js` (162 lines)
+  - Used by: `/blog` and `/blog/[slug]` routes
+
+**Image Hosting:**
+- **ktg.one** — Self-hosted images (main domain)
+  - Enabled in Next.js image optimization config
+- **lawngreen-mallard-558077.hostingersite.com** — WordPress images
+  - Enabled in Next.js image optimization config
 
 ## Data Storage
 
 **Databases:**
-- None detected - Static/SSG architecture with external content source
+
+**Vercel Postgres:**
+- Type: Managed PostgreSQL
+- Connection: `POSTGRES_URL` environment variable
+- Client: `postgres` (3.4.8) — PostgreSQL JavaScript client
+- ORM: Drizzle ORM (0.45.1) with TypeScript typings
+- Schema file: `src/lib/db/schema.js` — Single `snippets` table
+- Schema details:
+  - `id` (UUID primary key, auto-generated)
+  - `title` (text, required)
+  - `description` (text, optional)
+  - `blob_url` (text, required) — Reference to Vercel Blob file
+  - `tags` (text array, optional)
+  - `snippet_type` (text, optional) — e.g., "gate", "technique", "protocol"
+  - `source_file` (text, required) — Original DOCS file name
+  - `created_at` (timestamp, auto-set)
+  - `updated_at` (timestamp, auto-set)
+- Migrations: Drizzle Kit generates migrations to `./drizzle/` directory
+- Migration config: `drizzle.config.js`
+- Query layer: `src/lib/snippets/queries.js` — CRUD operations
+  - `getAllSnippets()` — Select all, ordered by created_at DESC
+  - `getSnippetById(id)` — Select by UUID
+  - `searchSnippets(query)` — Search by title/description (case-insensitive)
+  - `createSnippet(data)` — Insert and return full record
 
 **File Storage:**
-- Hostinger-hosted WordPress media:
-  - Domain: `lawngreen-mallard-558077.hostingersite.com`
-  - Connection: HTTPS fetch
-  - Contains: Featured images and blog media
-- Local filesystem (public/assets):
-  - `/public/assets/` - SVG icons, OG images, other static assets
-  - Client: Next.js Static File Serving
+
+**Vercel Blob:**
+- Service: Cloud file storage (public, HTTP-accessible)
+- Access token: `BLOB_READ_WRITE_TOKEN` environment variable
+- Files stored: Markdown snippet content
+- Path structure: `snippets/{filename}.md`
+- Metadata: Content-Type: `text/markdown`, Access: `public`
+- Integration: `src/lib/snippets/storage.js`
+  - `uploadSnippet(filename, content)` — PUT file, returns object with `url`
+  - `getSnippetContent(url)` — GET file, returns text content
+- Populated by: `scripts/extract-snippets.js` — Reads local DOCS files and uploads to Blob
 
 **Caching:**
-- Next.js ISR: 60-second revalidation for dynamic blog routes
-- GSAP animation caching: In-memory (ScrollTrigger instances)
-- Image caching: Browser cache + Vercel CDN (optimized images)
+- ISR (Incremental Static Regeneration) — 60 second revalidation on WordPress blog routes
+- Next.js built-in caching for images (optimized via `next.config.js`)
+- No external caching service (Redis, etc.)
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- None detected - Static site, no user authentication system
-
-**Content Access:**
-- WordPress REST API: Public endpoint (no authentication required)
-- Vercel Speed Insights: Public token embedded in page
+- Custom/None for main app — No auth system implemented
+- Google OAuth implied for AI Studio (ulti-chat) — Inherited from AI Studio platform
+  - `APP_URL` used for OAuth callback setup
+  - Details handled by Cloud Run environment
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- None detected (no Sentry, Bugsnag, or similar)
-
-**Performance Monitoring:**
-- Vercel Speed Insights
-  - Integration: `@vercel/speed-insights` 1.2.0
-  - Component: `<SpeedInsights />` in `src/app/layout.jsx`
-  - Metrics tracked: Core Web Vitals (LCP, FID, CLS), page load times
-  - Data sent to: Vercel analytics endpoint
+- None detected (no Sentry, LogRocket, etc.)
 
 **Logs:**
-- Browser console: Standard `console.error()` and `console.warn()` for development
-- Server logs: Next.js built-in logging to stdout (Vercel capture)
-- WordPress API errors logged to console with full context (URL, status, response snippet)
+- Console logging via `console.error()` and `console.warn()` in:
+  - WordPress client (`src/lib/wordpress.js`) — Detailed fetch errors and timeouts
+  - API routes (`src/app/api/hub/snippets/route.js`) — Database and Blob errors
+  - Database client (`src/lib/db/index.js`) — Missing env var errors
+- No log aggregation service (Datadog, CloudWatch, etc.)
+
+**Performance Monitoring:**
+- Vercel Speed Insights (`@vercel/speed-insights/next`) — Imported in `src/app/layout.jsx`
+  - Web Vitals tracking (LCP, FID, CLS)
+  - Deployed to production only
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Vercel - Primary deployment platform
-  - Edge Functions: Available (not currently used)
-  - Serverless Functions: Available (not currently used)
-  - Build Command: `next build`
-  - Start Command: `next start`
-  - Environment: Node.js 18+
+- **Main app (`ktgv2`)** — Vercel (Edge Network, automatic HTTPS, CDN)
+  - Custom domain: `ktg.one`
+  - Build command: `next build`
+  - Start command: `next start`
+  - Region: `iad1` (US East Coast, per `vercel.json`)
+  - npm flag: `--legacy-peer-deps` (peer dependency compatibility)
+
+- **ulti-chat sub-app** — Google Cloud Run
+  - Standalone Next.js deployment with `output: 'standalone'`
+  - Built via AI Studio platform (source-managed interface)
+  - Environment: Custom `APP_URL` injected at runtime
+  - HMR disabled during agent edits via `DISABLE_HMR=true`
 
 **CI Pipeline:**
-- GitHub → Vercel automatic deployments
-  - Trigger: Push to main branch
-  - Preview deployments: Auto-generated for PRs
-  - Production: Manual or automatic on merge
-- Pre-deployment: ESLint checks (via `npm run lint`)
-
-**Build Optimization:**
-- Turbopack enabled for faster rebuild times
-- CSS optimization enabled
-- Next.js image optimization
-- SWC compiler for faster transpilation
+- Not explicitly configured (no GitHub Actions, GitLab CI, etc.)
+- Vercel handles automatic deployments from git pushes
 
 ## Environment Configuration
 
-**Required env vars:**
-```
-NEXT_PUBLIC_WORDPRESS_URL    # WordPress API endpoint (default: https://lawngreen-mallard-558077.hostingersite.com)
-NEXT_PUBLIC_SITE_URL         # Site canonical URL (default: https://ktg.one)
-OPENAI_API_KEY               # OpenAI API authentication (optional, likely not in use)
-```
+**Required env vars (main app):**
+- `POSTGRES_URL` — Vercel Postgres connection string (format: `postgresql://...`)
+- `BLOB_READ_WRITE_TOKEN` — Vercel Blob API token
+- `NEXT_PUBLIC_WORDPRESS_URL` (optional) — WordPress API endpoint (defaults to Hostinger instance)
 
-**Optional env vars:**
-- None documented
+**Required env vars (ulti-chat):**
+- `GEMINI_API_KEY` — Google Gemini API authentication
+- `APP_URL` — Cloud Run service base URL (for OAuth callbacks)
 
 **Secrets location:**
-- Vercel Project Settings → Environment Variables (encrypted at rest)
-- Local development: `.env.local` (not committed)
-- Build time: Injected via Vercel CLI deployment
+- Main app: Vercel Environment Variables (encrypted in Vercel dashboard)
+- ulti-chat: AI Studio Secrets panel (Google Cloud Secret Manager)
 
 ## Webhooks & Callbacks
 
@@ -113,31 +152,8 @@ OPENAI_API_KEY               # OpenAI API authentication (optional, likely not i
 - None detected
 
 **Outgoing:**
-- Vercel Speed Insights - Automatic performance data submission on each page load
-- WordPress REST API - One-directional reads (no write operations)
-
-## Image Delivery & CDN
-
-**Image Optimization Service:**
-- Vercel Image Optimization CDN
-  - Formats: AVIF (primary), WebP (fallback), original
-  - Device sizes: 640, 750, 828, 1080, 1200, 1920px
-  - Image sizes: 16, 32, 48, 64, 96, 128, 256px
-
-**Allowed remote hosts:**
-- `ktg.one` - Portfolio assets
-- `lawngreen-mallard-558077.hostingersite.com` - WordPress media
-
-## Third-Party Integrations Summary
-
-| Service | Purpose | Status | Critical |
-|---------|---------|--------|----------|
-| WordPress (Hostinger) | Blog content | Active | No (graceful degradation) |
-| OpenAI API | AI capabilities | Installed, unused | No |
-| Vercel Platform | Hosting + Speed Insights | Active | Yes |
-| Google Fonts | Typography | Active | Yes (with fallbacks) |
-| Vercel Analytics | Performance monitoring | Active | No |
+- None detected (WordPress is fetch-only, no webhook listeners)
 
 ---
 
-*Integration audit: 2026-03-21*
+*Integration audit: 2026-03-23*

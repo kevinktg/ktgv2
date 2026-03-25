@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\(sk-[a-zA-Z0-9]{20,}|sk_live_[a-zA-Z0-9]+|sk_test_[a-zA-Z0-9]+|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|glpat-[a-zA-Z0-9_-]+|AKIA[A-Z0-9]{16}|xox[baprs]-[a-zA-Z0-9-]+|-----BEGIN.*PRIVATE KEY|eyJ[a-zA-Z0-9_-]+\\\\.eyJ[a-zA-Z0-9_-]+\\\\.\\)' .planning/codebase/*.md)",
+      "Bash(node \"C:/Users/kevin/.claude/get-shit-done/bin/gsd-tools.cjs\" commit \"docs: map existing codebase\" --files .planning/codebase/*.md)",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__evaluate_script",
+      "Skill(gsd:new-project)",
+      "Skill(gsd:new-project:*)",
+      "mcp__gsap-master__understand_and_create_animation",
+      "mcp__context7__resolve-library-id",
+      "mcp__gsap-master__get_gsap_api_expert",
+      "mcp__lotus-wisdom__lotuswisdom",
+      "mcp__context7__query-docs",
+      "mcp__gsap-master__debug_animation_issue",
+      "mcp__gsap-master__optimize_for_performance",
+      "Bash(npx next:*)",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__gsap-master__generate_complete_setup",
+      "Skill(gsd:add-tests)",
+      "Skill(gsd:add-tests:*)",
+      "mcp__chrome-devtools__list_pages",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Read(//c/Users/kevin/.claude/plugins/cache/claude-skills/frontend/bce23b5e1489/skills/shadcn-ui/references/**)",
+      "Bash(pnpm dlx:*)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8009)",
+      "WebFetch(domain:tympanus.net)",
+      "mcp__fetch__fetch",
+      "WebFetch(domain:github.com)",
+      "Read(//c/Users/kevin/.claude/skills/**)",
+      "mcp__gsap-master__create_production_pattern",
+      "Bash(git checkout:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

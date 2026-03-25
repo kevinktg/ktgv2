@@ -1,4 +1,5 @@
 import { Syne, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ClientLayout } from "@/components/ClientLayout";
@@ -6,8 +7,6 @@ import { GeometricBackground } from "@/components/GeometricBackground";
 import { CursorDot } from "@/components/CursorDot";
 import { DockNav } from "@/components/DockNav";
 
-// OPTIMIZATION: Use 'swap' to ensure branding fonts load even on slower connections.
-// fallback ensures graceful degradation if Google Fonts fails
 const syne = Syne({
   weight: ["400", "700", "800"],
   subsets: ["latin"],
@@ -20,7 +19,16 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
-  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
+  fallback: ["system-ui", "Arial", "sans-serif"],
+});
+
+const iosevka = localFont({
+  src: [
+    { path: "../../public/fonts/Iosevka-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/Iosevka-Bold.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata = {
@@ -63,7 +71,7 @@ export default function RootLayout({ children }) {
       <head>
       </head>
       <body
-        className={`${syne.variable} ${inter.variable} antialiased text-foreground overflow-x-hidden selection:bg-white selection:text-black relative`}
+        className={`${syne.variable} ${inter.variable} ${iosevka.variable} antialiased text-foreground overflow-x-hidden selection:bg-white selection:text-black relative`}
         suppressHydrationWarning
       >
         <ClientLayout>

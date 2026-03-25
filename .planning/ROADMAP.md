@@ -4,6 +4,8 @@
 
 Deliver a production-ready KTG One site in three coarse milestones: first a consistent marketing shell with Lenis/GSAP discipline; then WordPress-backed blog reading with safe HTML and predictable errors; finally SEO surfaces and operational reliability (build/CI, monitoring) so visitors can find the site and the team can ship with confidence.
 
+A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub chat at `/hub/chat` — this is separate from the v1 marketing milestone but tracked here.
+
 ## Phases
 
 **Phase numbering:** Integer phases (1, 2, 3) for this milestone. Decimal phases reserved for urgent inserts via `/gsd:insert-phase`.
@@ -71,6 +73,32 @@ Deliver a production-ready KTG One site in three coarse milestones: first a cons
 - [ ] **03-01** — Metadata + OG/Twitter absolute URLs audit across marketing + blog templates
 - [ ] **03-02** — Sitemap scale (paginate beyond 100 posts), CI/build parity, Speed Insights verification
 
+---
+
+## Hub Chat Feature Branch (`feature/ulti-chat-integration`)
+
+**Goal:** Integrate AI chat at `/hub/chat` as a multi-model gateway with personas, prompt injects, skills, and MCP toggles.
+
+**Branch:** `feature/ulti-chat-integration` (off main @ `9b46dde`)
+**Research:** `.planning/phases/hub-RESEARCH.md`
+**Detail plan:** `task_plan.md` (root)
+
+**Hub Chat Phases**
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Branch + deps + reference move | ✅ Complete |
+| 2 | API route (9 providers, 21 models, 4 SDK bugs fixed) | ✅ Complete |
+| 3 | Component decomposition | ⏸️ Deferred |
+| 4 | shadcn/ui conversion | ✅ Complete |
+| 5 | Route integration at `/hub/chat` | ✅ Complete |
+| 6 | Verification (live testing) | 🔄 In Progress — needs API keys |
+| 7 | Polish (dots, Iosevka, real skills, presets) | ⏸️ Pending |
+
+**Blocked on:** API keys in `.env.local`. Run `vercel env pull .env.local`.
+
+---
+
 ## Progress
 
 **Execution order:** 1 → 2 → 3
@@ -82,6 +110,6 @@ Deliver a production-ready KTG One site in three coarse milestones: first a cons
 | 3. SEO & operations | 0/2 | Not started | - |
 
 ---
-*Roadmap created: 2026-03-21 — granularity: coarse (3 phases)*  
-*Milestone: current v1 planning cycle*  
-*Last updated: 2026-03-21 — Phase 1 plans filed under `.planning/phases/01-marketing-shell/`; GSAP hygiene fixes in `src/`*
+*Roadmap created: 2026-03-21 — granularity: coarse (3 phases)*
+*Milestone: current v1 planning cycle*
+*Last updated: 2026-03-24 — Hub chat feature branch added; STATE.md updated with current position*

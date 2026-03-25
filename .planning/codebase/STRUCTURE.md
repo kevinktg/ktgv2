@@ -1,268 +1,475 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-03-21
+**Analysis Date:** 2026-03-23
 
 ## Directory Layout
 
 ```
 ktgv2/
 ├── src/
-│   ├── app/                          # Next.js App Router
-│   │   ├── layout.jsx                # Root layout (fonts, metadata, global wrappers)
-│   │   ├── page.jsx                  # Home page (sections orchestration)
-│   │   ├── globals.css               # Global styles, animations, theme variables
-│   │   ├── blog/
-│   │   │   ├── page.jsx              # Blog listing page
-│   │   │   ├── [slug]/
-│   │   │   │   └── page.jsx          # Individual blog post
-│   │   │   └── not-found.jsx         # Blog 404 handler
-│   │   ├── expertise/
-│   │   │   └── page.jsx              # Expertise section standalone
-│   │   ├── validation/
-│   │   │   └── page.jsx              # Validation section standalone
-│   │   ├── api/                      # Server API routes (currently unused)
+│   ├── app/                          # Next.js 16 App Router (main site)
+│   │   ├── layout.jsx                # Root server layout (fonts, globals, metadata)
+│   │   ├── page.jsx                  # Homepage (hero + sections)
 │   │   ├── template.jsx              # Page transition wrapper
-│   │   └── sitemap.js                # XML sitemap generation
-│   │
-│   ├── components/                   # React components (mixed SSR + client)
-│   │   ├── shadcn-studio/            # Pre-built shadcn component library
-│   │   │   ├── button/
-│   │   │   └── card/
-│   │   ├── ui/                       # Styled Radix UI primitives
+│   │   ├── globals.css               # Tailwind directives + CSS variables
+│   │   ├── api/
+│   │   │   └── hub/
+│   │   │       └── snippets/
+│   │   │           ├── route.js      # GET/POST snippets
+│   │   │           └── [id]/
+│   │   │               └── route.js  # GET/PUT/DELETE single snippet
+│   │   ├── blog/
+│   │   │   ├── page.jsx              # Blog index (fetches WordPress)
+│   │   │   ├── [slug]/
+│   │   │   │   └── page.jsx          # Blog detail page
+│   │   │   ├── not-found.jsx         # Blog 404
+│   │   │   └── (static posts cached)
+│   │   ├── expertise/
+│   │   │   └── page.jsx              # Expertise detail page
+│   │   ├── hub/
+│   │   │   ├── page.jsx              # Hub index (redirects to /hub/snippets)
+│   │   │   ├── README.md             # Hub documentation
+│   │   │   └── snippets/
+│   │   │       ├── page.jsx          # Snippet browser (grid view)
+│   │   │       └── [id]/
+│   │   │           └── page.jsx      # Snippet detail (markdown view)
+│   │   ├── validation/
+│   │   │   └── page.jsx              # Credentials/validation section
+│   │   ├── components/               # Page-scoped components (UI primitives)
+│   │   │   └── ui/
+│   │   │       ├── button.tsx
+│   │   │       ├── input.tsx
+│   │   │       ├── switch.tsx
+│   │   │       └── (shadcn primitives)
+│   │   └── ulti-chat/                # ⚠️ ISOLATED: Standalone Next.js 15 project
+│   │       ├── app/
+│   │       │   ├── layout.tsx
+│   │       │   ├── page.tsx          # Gemini AI chat interface
+│   │       │   └── globals.css
+│   │       ├── hooks/
+│   │       │   └── use-mobile.ts
+│   │       ├── lib/
+│   │       │   └── utils.ts
+│   │       ├── package.json          # Separate dependency manifest
+│   │       ├── tsconfig.json         # TypeScript config (ulti-chat only)
+│   │       ├── next.config.ts
+│   │       ├── metadata.json
+│   │       ├── components.json
+│   │       ├── .eslintrc.json
+│   │       └── (has own build system)
+│   ├── components/                   # Global, reusable components
+│   │   ├── ClientLayout.jsx          # Lenis + GlobalCursor wrapper
+│   │   ├── GeometricBackground.jsx   # Fixed bg with animated gradient
+│   │   ├── CursorDot.jsx             # Custom cursor overlay (MUST be last in tree)
+│   │   ├── DockNav.jsx               # Floating icon navigation
+│   │   ├── GlobalCursor.jsx          # Cursor event listener
+│   │   │
+│   │   ├── HeroSection.jsx           # Hero with intro animation
+│   │   ├── HeroTransition.jsx        # Wipe transition effect
+│   │   ├── HeroImages.jsx            # Three.js particle effects (lazy loaded)
+│   │   ├── ExpertiseSection.jsx      # Expertise cards section
+│   │   ├── ExpertiseTransition.jsx   # Wipe transition
+│   │   ├── ValidationSection.jsx     # Horizontal scroll section
+│   │   ├── PhilosophySection.jsx     # Parallax quotes
+│   │   ├── ContactCTA.jsx            # Contact form
+│   │   ├── Footer.jsx                # Footer links
+│   │   ├── BlogPreview.jsx           # WordPress post preview card
+│   │   ├── ToolsSection.jsx          # AI tools showcase
+│   │   ├── PageTransition.jsx        # Route transition effect
+│   │   ├── ScrollTransition.jsx      # Scroll-triggered transition
+│   │   ├── SkipButton.jsx            # Intro skip button
+│   │   ├── SplitText.jsx             # Text animation utility
+│   │   ├── Header.jsx                # Page header
+│   │   │
+│   │   ├── hub/
+│   │   │   ├── SnippetCard.jsx       # Snippet card in grid
+│   │   │   └── SnippetViewer.jsx     # Snippet markdown viewer
+│   │   ├── ui/                       # shadcn/ui primitives (Radix + Tailwind)
+│   │   │   ├── accordion.jsx
+│   │   │   ├── badge.jsx
 │   │   │   ├── button.jsx
 │   │   │   ├── card.jsx
-│   │   │   ├── badge.jsx
-│   │   │   ├── separator.jsx
-│   │   │   ├── navigation-menu.jsx
+│   │   │   ├── input.jsx
+│   │   │   ├── label.jsx
 │   │   │   ├── matter-button.jsx
-│   │   │   └── skeleton.jsx
-│   │   │
-│   │   ├── Layout Components
-│   │   │   ├── ClientLayout.jsx      # Client-side wrapper (Lenis + GlobalCursor)
-│   │   │   ├── Header.jsx            # Fixed navigation header
-│   │   │   └── Footer.jsx            # Footer with links
-│   │   │
-│   │   ├── Section Components (Animated Pages)
-│   │   │   ├── HeroSection.jsx       # Hero with image reveal + skip button
-│   │   │   ├── HeroTransition.jsx    # Wipe animation Hero → Expertise
-│   │   │   ├── ExpertiseSection.jsx  # Skills grid + stat counters
-│   │   │   ├── ExpertiseTransition.jsx # Wipe animation Expertise → Validation
-│   │   │   ├── ValidationSection.jsx # Horizontal scroll cards + shutter animation
-│   │   │   ├── PhilosophySection.jsx # Parallax quotes + character stagger
-│   │   │   ├── BlogPreview.jsx       # Blog grid with featured images
-│   │   │   └── ScrollTransition.jsx  # Scroll-triggered wipe animations
-│   │   │
-│   │   ├── Animation/Effects Components
-│   │   │   ├── HeroImages.jsx        # Three.js canvas + blob reveal
-│   │   │   ├── GeometricBackground.jsx # Moving squares + grid + wireframes
-│   │   │   ├── GlobalCursor.jsx      # Custom cursor dot tracking
-│   │   │   ├── CursorDot.jsx         # Global cursor (top of stacking context)
-│   │   │   └── SplitText.jsx         # Character splitting for stagger
-│   │   │
-│   │   └── Utility Components
-│   │       ├── SkipButton.jsx        # Hero skip to main content
-│   │       ├── PageTransition.jsx    # Page-level transition effect
-│   │
-│   ├── lib/                          # Utilities and data clients
-│   │   ├── utils.js                  # Class name merging (cn utility)
-│   │   ├── wordpress.js              # WordPress REST API client
+│   │   │   ├── navigation-menu.jsx
+│   │   │   ├── separator.jsx
+│   │   │   ├── skeleton.jsx
+│   │   │   ├── textarea.jsx
+│   │   │   └── tooltip.jsx
+│   │   └── shadcn-studio/            # Extended shadcn variants
+│   │       ├── button/
+│   │       │   └── button-48.jsx
+│   │       └── card/
+│   │           └── card-16.jsx
+│   ├── lib/
+│   │   ├── db/
+│   │   │   ├── index.js              # Drizzle ORM client (Vercel Postgres)
+│   │   │   └── schema.js             # Drizzle schema (snippets table)
+│   │   ├── snippets/
+│   │   │   ├── queries.js            # Drizzle queries (getAllSnippets, getSnippetById, searchSnippets, createSnippet)
+│   │   │   └── storage.js            # Vercel Blob operations (getSnippetContent, uploadSnippet)
+│   │   ├── wordpress.js              # WordPress REST client (fetch posts)
+│   │   ├── utils.js                  # Utility functions (cn, clsx, etc.)
 │   │   └── usePrefersReducedMotion.js # Motion preference hook
-│   │
-│   └── libs/                         # Third-party library wrappers
-│       └── lenis.jsx                 # Lenis scroll sync with GSAP
-│
+│   ├── libs/
+│   │   └── lenis.jsx                 # Lenis scroll instance + context (note: 'libs' not 'lib')
+│   └── (no app validation folder — validation content is a page)
 ├── public/
-│   └── assets/                       # Images, SVGs, static media
-│       ├── top-hero.webp
-│       ├── bottom-hero.webp
-│       ├── ktg.svg
-│       ├── og-image.jpg
-│       └── [other media files]
-│
-├── package.json                      # Dependencies (Next.js, GSAP, Lenis, Three.js)
-├── next.config.js                    # Next.js configuration
-├── tailwind.config.js                # Tailwind CSS theme + plugins
-├── components.json                   # shadcn CLI config
-└── context.json                      # Project context config
+│   ├── assets/
+│   │   ├── ktg.svg                   # Logo
+│   │   ├── og-image.jpg              # OpenGraph preview
+│   │   ├── top-hero.webp             # Hero image
+│   │   ├── bottom-hero.webp          # Hero image
+│   │   ├── chat.webp                 # AI chat screenshot
+│   │   ├── (model logos: claude, gemini, grok, deepseek, etc.)
+│   │   ├── (shapes: shape1.svg, shape2.svg, etc.)
+│   │   ├── teamllm.mp4               # Video asset
+│   │   └── archive/                  # Legacy image assets
+│   └── robots.txt
+├── scripts/
+│   ├── extract-snippets.js           # CLI: Populate Postgres from DOCS
+│   └── scroll-screenshot.js          # Utility script
+├── .planning/
+│   ├── codebase/                     # Architecture docs (this directory)
+│   │   ├── ARCHITECTURE.md
+│   │   └── STRUCTURE.md
+│   ├── phases/                       # Implementation phase plans
+│   ├── research/                     # Research notes
+│   └── todos/
+├── package.json                      # Root dependencies (Next.js 16, React 19, etc.)
+├── next.config.js                    # Next.js config (image remoting, turbopack, build optimization)
+├── jsconfig.json                     # Path aliases (@/* → ./src/*)
+├── .env.local                        # Secrets (POSTGRES_URL, BLOB_READ_WRITE_TOKEN, AI SDK keys)
+├── tailwind.config.js                # Tailwind CSS v4 config
+├── .eslintrc.js                      # ESLint config
+├── .cursor/
+│   └── rules/                        # Cursor IDE rules (openmemory.mdc, etc.)
+├── .vscode/                          # VS Code settings
+├── .vercel/                          # Vercel deployment config
+├── .github/
+│   └── workflows/                    # CI/CD pipelines
+└── docs/                             # Documentation (analysis, plans, superpowers)
 ```
 
 ## Directory Purposes
 
-**src/app/**
+### `src/app/` — Next.js App Router (Main Site)
 
-- Purpose: Next.js App Router pages and layouts
-- Contains: Route definitions, server components, metadata, styling
-- Key files: `layout.jsx` (root), `page.jsx` (home), `globals.css` (theme)
+**Purpose:** All routable pages and API endpoints
 
-**src/components/**
+**Contains:**
+- **layout.jsx**: Root layout that wraps entire app; loads fonts; mounts global components
+- **page.jsx**: Homepage with hero + expertise + validation + philosophy + contact sections
+- **template.jsx**: Page transition effects (wraps all route changes)
+- **globals.css**: Tailwind directives, CSS variable definitions (`--font-syne`, `--font-inter`, color tokens)
+- **api/hub/snippets/**: CRUD endpoints for snippet management (backed by Drizzle + Blob)
+- **blog/**: Blog pages fetching from WordPress REST API
+- **expertise/, validation/, hub/**: Static/semi-dynamic pages
+- **ulti-chat/**: ⚠️ Isolated Next.js 15 project (do not import from main app)
 
-- Purpose: Reusable React components
-- Contains: Page sections, UI primitives, animation components, utilities
-- Key files: Section components (Hero, Expertise, Validation, Philosophy, Blog)
+### `src/components/` — Global Components
 
-**src/lib/**
+**Purpose:** Reusable components shared across pages
 
-- Purpose: Shared utilities and data clients
-- Contains: API wrappers, custom hooks, helper functions
-- Key files: `wordpress.js` (blog data), `usePrefersReducedMotion.js` (accessibility)
+**Contains:**
+- **Layout components**: `ClientLayout` (Lenis wrapper), `GlobalCursor`, `CursorDot`, `DockNav`
+- **Background**: `GeometricBackground` (fixed, animated, cursor-reactive)
+- **Page sections**: `HeroSection`, `ExpertiseSection`, `ValidationSection`, `PhilosophySection`, `ContactCTA`, `Footer`
+- **Transitions**: `HeroTransition`, `ExpertiseTransition`, `PageTransition`, `ScrollTransition`
+- **Hub**: `SnippetCard`, `SnippetViewer`
+- **UI primitives**: `ui/` (shadcn exports), `shadcn-studio/` (extended variants)
 
-**src/libs/**
+**Key files:**
+- `CursorDot.jsx`: Must be **last** child of `<ClientLayout>` to stay on top of all z-index stacking contexts
+- `HeroImages.jsx`: Lazy loaded; uses Three.js for particle/3D effects
 
-- Purpose: Third-party library integration wrappers
-- Contains: Lenis + GSAP ScrollTrigger bridge
-- Key files: `lenis.jsx` (scroll sync configuration)
+### `src/lib/` — Business Logic & Data Access
 
-**public/assets/**
+**Purpose:** Queries, external API clients, utilities
 
-- Purpose: Static media files
-- Contains: WebP/JPG images, SVGs, static resources
-- Generated/committed: Yes (included in repo)
+**Contains:**
+- **db/**: Drizzle ORM client and schema for Vercel Postgres (snippets table)
+- **snippets/**: Query and storage layers (getAllSnippets, createSnippet, uploadSnippet)
+- **wordpress.js**: WordPress REST client for fetching blog posts
+- **utils.js**: Helper utilities (classNameMerge via clsx, type guards, etc.)
+- **usePrefersReducedMotion.js**: Hook for respecting motion preferences
+
+### `src/libs/` — Global Context/Providers
+
+**Purpose:** Singletons and context providers (note: named `libs` not `lib`)
+
+**Contains:**
+- **lenis.jsx**: Exports Lenis scroll instance and context hook; imported into `ClientLayout`
+
+### `public/` — Static Assets
+
+**Purpose:** Images, videos, SVGs (served by CDN)
+
+**Contains:**
+- **assets/**: Logos, hero images, model icons, background shapes, videos
+- **robots.txt**: SEO
+
+### `scripts/` — Utility Scripts
+
+**Purpose:** CLI commands for operations outside normal app flow
+
+**Contains:**
+- **extract-snippets.js**: One-time script to extract DOCS files into Postgres + Blob
+- **scroll-screenshot.js**: Browser automation for screenshots
 
 ## Key File Locations
 
-**Entry Points:**
+### Entry Points
 
-- `src/app/layout.jsx`: Root layout, fonts, metadata, global wrappers
-- `src/app/page.jsx`: Home page, section orchestration, blog fetch
-- `src/app/blog/page.jsx`: Blog listing route
-- `src/app/blog/[slug]/page.jsx`: Dynamic blog post route
+- `src/app/layout.jsx` — Root server layout (loads fonts, mounts globals)
+- `src/app/page.jsx` — Homepage
+- `src/components/ClientLayout.jsx` — Client-side wrapper (Lenis + cursor)
 
-**Configuration:**
+### Configuration
 
-- `next.config.js`: Next.js build settings, image optimization, turbopack config
-- `tailwind.config.js`: Tailwind theme, color palette, font families
-- `package.json`: Dependencies, scripts (dev, build, lint)
-- `src/app/globals.css`: CSS variables, animations, responsive breakpoints
+- `next.config.js` — Next.js build config (image remoting, turbopack, optimization)
+- `jsconfig.json` — Path aliases (`@/*` → `./src/*`)
+- `package.json` — Dependencies and build scripts
+- `.env.local` — Secrets (POSTGRES_URL, BLOB_TOKEN, API keys)
+- `tailwind.config.js` — Tailwind CSS configuration
 
-**Core Logic:**
+### Core Logic
 
-- `src/lib/wordpress.js`: WordPress REST API client with timeout + error handling
-- `src/libs/lenis.jsx`: Lenis ↔ GSAP ScrollTrigger synchronization
-- `src/components/SplitText.jsx`: Character-level text splitting for stagger animations
-- `src/components/GeometricBackground.jsx`: Persistent animated background
+- `src/lib/db/schema.js` — Drizzle schema definition (snippets table)
+- `src/lib/snippets/queries.js` — Database queries (Drizzle)
+- `src/lib/snippets/storage.js` — Vercel Blob operations
+- `src/lib/wordpress.js` — WordPress REST API client
 
-**Testing:**
+### Testing
 
-- No dedicated test directory found
-- No jest/vitest config detected
+**Not configured.** No Jest, Vitest, or test suite. Verification is manual via `npm run dev` and browser.
 
 ## Naming Conventions
 
-**Files:**
+### Files
 
-- **Page routes:** lowercase with underscores (e.g., `[slug]`, `not-found.jsx`)
-- **Components:** PascalCase (e.g., `HeroSection.jsx`, `ValidationSection.jsx`)
-- **Utilities/hooks:** camelCase (e.g., `usePrefersReducedMotion.js`, `wordpress.js`)
-- **Styles:** globals.css (global), component.module.css (not used, inline Tailwind)
-- **Assets:** lowercase with hyphens (e.g., `top-hero.webp`, `og-image.jpg`)
+- **Page routes**: `page.jsx` (lowercase)
+- **Layout components**: `ComponentName.jsx` (PascalCase)
+- **Utility files**: `snake-case.js` (e.g., `wordpress.js`, `usePrefersReducedMotion.js`)
+- **API routes**: `route.js` (lowercase)
+- **Styles**: `globals.css`, component-scoped styles via Tailwind or `module.css` (none present; all Tailwind)
+- **shadcn primitives**: `component-name.jsx` (kebab-case in filename, exported as PascalCase)
 
-**Directories:**
+### Directories
 
-- **Components:** PascalCase grouping (e.g., `src/components/ui/`, `shadcn-studio/`)
-- **Routes:** lowercase (e.g., `blog/`, `api/`, `validation/`)
-- **Utilities:** lowercase plural (e.g., `lib/`, `libs/`)
+- **Feature grouping**: `[feature]/` (e.g., `hub/`, `blog/`)
+- **Route segments**: `[bracket]/` for dynamic routes (e.g., `[slug]/`)
+- **Utility**: `lib/`, `libs/`, `components/`, `scripts/`
 
-**Classes/Exports:**
+### Functions & Components
 
-- **React components:** PascalCase (e.g., `export function HeroSection()`)
-- **Hooks:** camelCase with 'use' prefix (e.g., `usePrefersReducedMotion()`)
-- **Functions:** camelCase (e.g., `getPosts()`, `formatDate()`)
-- **CSS classes:** kebab-case (e.g., `.split-char`, `.stat-counter`, `.digital-text`)
+- **React components**: PascalCase (e.g., `HeroSection`, `SnippetCard`)
+- **Hooks**: `use*` (e.g., `usePrefersReducedMotion`)
+- **Utilities**: camelCase (e.g., `getAllSnippets`, `uploadSnippet`)
 
-**Animation/Data Classes:**
+### CSS & Styling
 
-- Character stagger targets: `.split-char`, `.split-word`
-- Section-specific: `.expertise-group`, `.stat-counter`, `.stat-label`, `.digital-text`
-- Cursor zones: `data-cursor-zone="hero"` (dataset attributes, not CSS classes)
+- **Tailwind**: Use full class names; no abbreviations
+- **Font variables**: `--font-syne`, `--font-inter`
+- **Colors**: Use CSS variables or hardcoded hex (`#00f0ff`)
+- **Text**: Lowercase styling via Tailwind (brand convention)
 
 ## Where to Add New Code
 
-**New Feature (e.g., new page section):**
+### New Route/Page
 
-- Primary code: `src/components/[SectionName]Section.jsx` (follow Section pattern)
-  - Include "use client" directive
-  - Use `useGSAP()` for animations
-  - Check `usePrefersReducedMotion()` for accessibility
-  - Use sessionStorage flags to prevent re-animation
-- Tests: Create alongside if tests are added (not currently in place)
-- Styling: Use Tailwind classes inline, extend colors in `tailwind.config.js` if needed
-- Add section to `src/app/page.jsx` composition
+**Location pattern:** `src/app/[path]/page.jsx`
 
-**New Component/Module:**
+Example: Adding a new "Services" page at `/services`:
+```
+src/app/services/page.jsx          # Main page
+src/components/ServicesSection.jsx # Section component (optional)
+```
 
-- **UI component:** `src/components/ui/[name].jsx` (atomic, reusable)
-  - Use Radix UI as base if possible
-  - Export function as default or named
-  - Use `cn()` utility for class merging
-- **Page route:** `src/app/[route]/page.jsx`
-  - If server-side data fetch needed, use `async` component
-  - If client-side only, add "use client" directive
-  - Set metadata/viewport as needed
-- **Animation component:** `src/components/[Name]Animation.jsx`
-  - Use `useGSAP()` hook
-  - Use `useRef()` for GSAP targets
-  - Clean up animations in cleanup function
+**Checklist:**
+- Use JSX (not TSX) in the main app
+- Import global fonts via `--font-syne` and `--font-inter`
+- Wrap in `"use client"` if using hooks, GSAP, or browser APIs
+- Organize sections in `src/components/`
 
-**Utilities:**
+### New Component
 
-- **Data client:** `src/lib/[service].js` (export async functions)
-  - Include timeout handling
-  - Include error handling with console logs
-  - Return empty object/array on error
-- **Custom hook:** `src/lib/use[Name].js` or `src/lib/use-[name].js`
-  - Return state/refs as needed
-  - Handle SSR edge cases (typeof window checks)
-- **Helper function:** `src/lib/utils.js` or new `src/lib/[domain].js`
-  - Pure functions where possible
-  - Export as named exports
+**Location pattern:** `src/components/ComponentName.jsx` (global) or `src/app/[feature]/components/` (feature-scoped)
 
-**Styling:**
+Example: Adding a modal to the hub:
+```
+src/components/hub/SnippetModal.jsx
+```
 
-- **Global styles:** Add to `src/app/globals.css`
-- **Theme variables:** Update `src/app/globals.css` :root section + `tailwind.config.js`
-- **Component styles:** Inline Tailwind classes (no external CSS files)
-- **Animations:** Define `@keyframes` in `globals.css`, reference via animation: class
+**Checklist:**
+- Use JSX syntax
+- Default export: `export default function ComponentName(props) { ... }`
+- Import Tailwind classes and shadcn primitives
+- Use `cn()` utility from `@/lib/utils` to merge classNames
+
+### New API Route
+
+**Location pattern:** `src/app/api/[path]/route.js`
+
+Example: Adding a new `/api/blog/posts` endpoint:
+```
+src/app/api/blog/posts/route.js
+```
+
+**Checklist:**
+- Export named functions: `export async function GET()`, `export async function POST()`, etc.
+- Use `NextResponse` for responses
+- Delegate logic to `src/lib/` (queries, transformations)
+- Handle errors with try/catch; log to console
+
+### New Database Query
+
+**Location pattern:** `src/lib/[feature]/queries.js`
+
+Example: Adding a query for user subscriptions:
+```
+src/lib/subscriptions/queries.js
+
+export async function getUserSubscription(userId) {
+  return await db.select().from(subscriptions).where(eq(subscriptions.user_id, userId));
+}
+```
+
+**Checklist:**
+- Use Drizzle ORM syntax
+- Document parameter types in JSDoc comment
+- Return raw query results or null
+- API route handles transformation and response
+
+### New External API Integration
+
+**Location pattern:** `src/lib/[service-name].js`
+
+Example: Adding a Slack webhook client:
+```
+src/lib/slack.js
+
+export async function sendSlackMessage(channel, message) {
+  // Implementation
+}
+```
+
+**Checklist:**
+- Wrap in a single file or `src/lib/[service]/` directory
+- Use environment variables for credentials
+- Handle errors and retries
+
+### Styling: New Tailwind Component
+
+**Do not create component CSS files.** Use Tailwind utilities in JSX:
+
+```jsx
+// ✅ Correct
+<button className="px-4 py-2 bg-[#00f0ff] text-black rounded hover:bg-[#00f0ff]/80">
+  Click me
+</button>
+
+// ❌ Don't do this:
+// Create a .module.css file or custom CSS
+```
+
+For complex, reusable styles, extend `tailwind.config.js` with custom `theme.extend` utilities.
 
 ## Special Directories
 
-**public/assets/**
+### `.planning/codebase/` — Architecture Documentation
 
-- Purpose: Static media files served directly
-- Generated: No (manually added)
-- Committed: Yes
-- Access: `/assets/[filename]` in code
+**Purpose:** Documentation for Claude agents executing future phases
 
-**src/app/api/**
+**Committed:** Yes
 
-- Purpose: Server API routes (Next.js API routes)
-- Generated: No
-- Committed: Yes (empty, not currently used)
-- Note: Use `src/lib/` for data clients instead
+**Generated:** No (manually written)
 
-**.next/**
+**Contents:**
+- ARCHITECTURE.md — Pattern, layers, data flow, abstractions
+- STRUCTURE.md — This file; directory layout, naming conventions, where to add code
 
-- Purpose: Build output and cached compilation
-- Generated: Yes (by `next build`)
-- Committed: No (.gitignored)
+### `.next/` — Build Output
 
-**.git/, .github/**
+**Purpose:** Next.js compiled output and cache
 
-- Purpose: Version control and CI/CD
-- Generated: Yes (git internals)
-- Committed: Yes (workflows, config)
+**Committed:** No (in .gitignore)
 
-## Import Path Aliases
+**Generated:** Yes (by `npm run build` or `npm run dev`)
 
-Configured in `jsconfig.json` or `next.config.js`:
+### `node_modules/` — Dependencies
 
-- `@/`: Points to `src/` root
-- `@/components`: `src/components/`
-- `@/lib`: `src/lib/`
-- `@/libs`: `src/libs/`
-- `@/app`: `src/app/`
+**Purpose:** Installed npm packages
 
-Usage: `import { HeroSection } from "@/components/HeroSection"`
+**Committed:** No (in .gitignore)
+
+**Generated:** Yes (by `npm install`)
+
+### `.env.local` — Secrets
+
+**Purpose:** Environment variables (POSTGRES_URL, BLOB_TOKEN, API keys)
+
+**Committed:** No (in .gitignore)
+
+**Generated:** No (created manually in development)
+
+### `.planning/phases/`, `.planning/todos/` — Phase Planning
+
+**Purpose:** Implementation plans and task tracking
+
+**Committed:** Yes
+
+**Generated:** By GSD orchestrator during planning phase
+
+### `.worktrees/` — Git Worktrees
+
+**Purpose:** Temporary git branches for isolated work
+
+**Committed:** No (in .gitignore)
+
+**Generated:** By git commands
+
+## Import Path Conventions
+
+**All imports use the `@/` alias** (defined in `jsconfig.json`):
+
+```javascript
+// ✅ Correct
+import { HeroSection } from "@/components/HeroSection";
+import { getAllSnippets } from "@/lib/snippets/queries";
+import { cn } from "@/lib/utils";
+
+// ❌ Don't do this:
+import { HeroSection } from "../components/HeroSection";
+import { getAllSnippets } from "../../../lib/snippets/queries";
+```
+
+## Critical Render Order
+
+The main app's render tree **must** follow this order (defined in `src/app/layout.jsx`):
+
+```jsx
+<ClientLayout>
+  {/* 1. Geometric background - lowest z-index */}
+  <GeometricBackground fixed />
+
+  {/* 2. Navigation */}
+  <DockNav />
+
+  {/* 3. Page content */}
+  {children}
+
+  {/* 4. Speed insights */}
+  <SpeedInsights />
+
+  {/* 5. CursorDot - MUST be LAST to stay on top */}
+  <CursorDot />
+</ClientLayout>
+```
+
+Changing this order will break z-index stacking and cursor overlay visibility.
 
 ---
 
-*Structure analysis: 2026-03-21*
+*Structure analysis: 2026-03-23*

@@ -1,147 +1,150 @@
 # Technology Stack
 
-**Analysis Date:** 2026-03-21
+**Analysis Date:** 2026-03-23
 
 ## Languages
 
 **Primary:**
-- JavaScript (JSX) - React components and frontend logic
-- TypeScript - Optional, but configuration present via `@swc/core` transpilation
-- CSS - Tailwind CSS 4 + custom global styles
+- JavaScript (JSX) — Main app (`src/app/`, `src/components/`, `src/lib/`) uses `.js` and `.jsx` files, not TypeScript
+- TypeScript — ulti-chat sub-app (`src/app/ulti-chat/`) uses `.ts` and `.tsx` files with strict type checking
+
+**Secondary:**
+- None (CSS handled via Tailwind)
 
 ## Runtime
 
 **Environment:**
-- Node.js 18+ (inferred from package dependencies and Next.js 16 requirements)
+- Node.js (version not explicitly pinned in `.nvmrc`, inferred from Next.js 16 compatibility: 18+)
 
 **Package Manager:**
-- npm
+- npm (uses `npm install --legacy-peer-deps` per Vercel build config in `vercel.json`)
 - Lockfile: `package-lock.json` present
 
 ## Frameworks
 
 **Core:**
-- Next.js 16.1.1 - Full-stack React framework with App Router
-  - Used for: Server-side rendering, static generation, API routes, image optimization
-- React 19.2.0 - UI library
-- React DOM 19.2.0 - DOM rendering
+- Next.js 16.1.1 (main app) — Full-stack React framework with App Router, Server/Client Components
+- Next.js 15.4.9 (ulti-chat sub-app) — Standalone instance deployed separately
+- React 19.2.0 (main app) — Component library
+- React 19.2.1 (ulti-chat) — Slightly newer patch
 
-**Animation & Graphics:**
-- GSAP 3.13.0 - Advanced animation library
-- @gsap/react 2.1.2 - React hook integration for GSAP
-- Three.js 0.182.0 - 3D graphics library
-- @react-three/fiber 9.5.0 - React renderer for Three.js
-- @react-three/drei 10.7.7 - Helper components for react-three-fiber
-- Lenis 1.3.15 - Smooth scroll library
-- @reactlenis component wrapper - Custom Lenis integration in `src/libs/lenis.jsx`
+**Styling & UI:**
+- Tailwind CSS 4.1.18 (main app) — Utility-first CSS framework with PostCSS
+- Tailwind CSS 4.1.11 (ulti-chat) — Slightly older version
+- @tailwindcss/postcss 4.1.18 (main app)
+- @tailwindcss/postcss 4.1.11 (ulti-chat)
+- @tailwindcss/typography 0.5.19 (both apps) — Prose component styling
+- Autoprefixer 10.4.21 (ulti-chat) — CSS vendor prefixing
 
-**Scroll & UX:**
-- Simplex-noise 4.0.3 - Procedural noise for generative animations
+**Animation:**
+- GSAP 3.13.0 (main app) — JavaScript animation library
+- @gsap/react 2.1.2 (main app) — React hooks for GSAP
+- Motion 12.23.24 (ulti-chat) — Modern animation library for React
+
+**Scroll:**
+- Lenis 1.3.15 (main app) — Smooth scrolling library (instantiated in `src/lib/lenis.jsx`)
+
+**3D Graphics:**
+- Three.js 0.182.0 (main app) — 3D JavaScript library
+- @react-three/fiber 9.5.0 (main app) — React renderer for Three.js
+- @react-three/drei 10.7.7 (main app) — Useful helpers for react-three/fiber
+- Simplex-noise 4.0.3 (main app) — Noise generation for procedural backgrounds
 
 **UI Components:**
-- Radix UI:
+- shadcn/ui primitives (Radix UI components, main app):
+  - @radix-ui/react-accordion 1.2.12
+  - @radix-ui/react-label 2.1.8
   - @radix-ui/react-navigation-menu 1.2.14
   - @radix-ui/react-separator 1.1.8
   - @radix-ui/react-slot 1.2.4
-- Lucide React 0.487.0 - Icon library
-- shadcn-studio components - Component library (custom implementations at `src/components/shadcn-studio/`)
+  - @radix-ui/react-tooltip 1.2.8
+- Radix UI components (ulti-chat):
+  - @radix-ui/react-avatar 1.1.11
+  - @radix-ui/react-dialog 1.1.15
+  - @radix-ui/react-scroll-area 1.2.10
+  - @radix-ui/react-separator 1.1.8
+  - @radix-ui/react-slot 1.2.4
+  - @radix-ui/react-switch 1.2.6
+  - @radix-ui/react-tooltip 1.2.8
+- cmdk 1.1.1 (ulti-chat) — Command/search menu component
+- Lucide-react 0.487.0 (main app) / 0.577.0 (ulti-chat) — Icon library
 
-**Styling:**
-- Tailwind CSS 4.1.18 - Utility-first CSS framework
-- @tailwindcss/postcss 4.1.18 - PostCSS plugin for Tailwind
-- @tailwindcss/typography 0.5.19 - Typography plugin for blog content
-- class-variance-authority 0.7.1 - Variant management for components
-- clsx 2.1.1 - Conditional className utility
-- tailwind-merge 3.4.0 - Merge Tailwind classes safely
+**Markdown & Content:**
+- react-markdown 10.1.0 (both apps) — Markdown rendering
+- remark-gfm 4.0.1 (both apps) — GitHub Flavored Markdown support
 
-**State Management:**
-- Zustand 4.5.7 - Lightweight state management (installed but minimal usage observed in codebase)
+**Utilities:**
+- clsx 2.1.1 (both apps) — Conditional class name utility
+- tailwind-merge 3.4.0 (main app) / 3.3.1 (ulti-chat) — Merge Tailwind classes
+- class-variance-authority 0.7.1 (both apps) — Component style variants
 
-**AI/Language Models:**
-- ai 6.0.5 - Vercel AI SDK
-- @ai-sdk/openai 3.0.9 - OpenAI provider for AI SDK
+**Testing:**
+- Not configured (no test framework detected)
 
-**Performance:**
-- @vercel/speed-insights 1.2.0 - Web performance metrics integration
+**Build/Dev:**
+- Turbopack (Next.js 16 bundler, configured in `next.config.js`)
+- SWC (JavaScript compiler, used by Next.js 16):
+  - @swc/core 1.15.8 (dev)
+  - @swc/cli 0.7.9 (dev)
+  - @swc/helpers 0.5.18
 
-**Build & Compilation:**
-- @swc/core 1.15.8 - Rust-based JavaScript compiler (transpiler)
-- @swc/cli 0.7.9 - CLI for SWC
-- @swc/helpers 0.5.18 - Runtime helpers for SWC transformations
-
-**Dev/Testing:**
-- ESLint 9 - JavaScript linter
-- Puppeteer 24.32.0 - Browser automation (for testing/debugging)
+**Linting:**
+- ESLint 9 (main app) / 9.39.1 (ulti-chat)
+- eslint-config-next 16.0.8 (ulti-chat)
 
 ## Key Dependencies
 
 **Critical:**
-- Next.js 16.1.1 - Framework foundation; handles routing, SSR, ISR, image optimization
-- React 19 - Core UI rendering engine
-- GSAP + @gsap/react - Enables 60fps scrolling animations central to UX
-- Lenis - Smooth scroll hijacking for scroll-based interactions
+- `@vercel/blob` 2.0.0 — Cloud file storage (stores snippet markdown files)
+- `@vercel/postgres` 0.10.0 — Managed PostgreSQL database
+- `postgres` 3.4.8 — PostgreSQL client (used by Drizzle ORM)
+- `drizzle-orm` 0.45.1 — TypeScript ORM for type-safe database queries
+- `drizzle-kit` 0.31.8 — Migration tooling for Drizzle
 
-**Animation & 3D:**
-- Three.js ecosystem - Enables 3D geometric background and interactive visuals
-- Simplex-noise - Procedural animation/texture generation
+**AI & APIs:**
+- `@google/genai` 1.17.0 (ulti-chat) — Google Gemini AI API client
+- `@ai-sdk/openai` 3.0.12 (main app) — Vercel AI SDK for OpenAI (not actively used in current code)
+- `ai` 6.0.5 (main app) — Vercel AI SDK core library (streaming, tool calling)
 
-**Styling & Components:**
-- Tailwind CSS 4 - Entire design system and utility-first styling
-- Radix UI - Accessible primitive components
-
-**External Integration:**
-- @ai-sdk/openai - OpenAI API client (likely for future AI features; minimal usage detected)
-- @vercel/speed-insights - Observability/performance monitoring
+**Infrastructure:**
+- `zustand` 4.5.7 (main app) — Lightweight state management
+- Vercel Speed Insights (`@vercel/speed-insights` 1.0.2) — Performance monitoring
 
 ## Configuration
 
 **Environment:**
-- Variables defined in `.env` (not visible; check `.env.example` or documentation)
-- Public vars prefixed with `NEXT_PUBLIC_`:
-  - `NEXT_PUBLIC_WORDPRESS_URL` - WordPress REST API endpoint (default: `https://lawngreen-mallard-558077.hostingersite.com`)
-  - `NEXT_PUBLIC_SITE_URL` - Site canonical URL (default: `https://ktg.one`)
+- `.env.local` — Development environment variables (`.env.example` not found in main app root)
+- `POSTGRES_URL` — Vercel Postgres connection string
+- `BLOB_READ_WRITE_TOKEN` — Vercel Blob read/write token
+- `NEXT_PUBLIC_WORDPRESS_URL` — External WordPress blog URL (optional, defaults to `https://lawngreen-mallard-558077.hostingersite.com`)
+
+**ulti-chat Environment:**
+- `GEMINI_API_KEY` — Google Gemini API key (injected by AI Studio at runtime)
+- `APP_URL` — Cloud Run service URL (injected by AI Studio at runtime)
 
 **Build:**
-- `next.config.js` - Next.js configuration
-  - Image optimization with AVIF/WebP formats
-  - Remote image domains: `ktg.one`, `lawngreen-mallard-558077.hostingersite.com`
-  - Turbopack enabled for faster builds
-  - CSS optimization enabled
-- `tailwind.config.js` - Tailwind CSS customization with design tokens
-- `postcss.config.mjs` - PostCSS configuration (Tailwind v4 via `@tailwindcss/postcss`)
-- `jsconfig.json` - JavaScript module resolution with path aliases (`@/` for `src/`)
+- `next.config.js` (main app) — Optimizations: Turbopack, image optimization, output file tracing
+- `src/app/ulti-chat/next.config.ts` (ulti-chat) — Standalone config with `output: 'standalone'` for Cloud Run deployment
+- `drizzle.config.js` — Database schema location and PostgreSQL dialect
+- `jsconfig.json` — Path alias `@/*` maps to `./src/*`
+- `vercel.json` — Deployment config for main app: Node.js region, npm legacy peer deps flag
 
-**Linting:**
-- ESLint 9 configured (config file check for `.eslintrc.json`, `.eslintrc.js`)
+**Post-CSS:**
+- `postcss.config.mjs` (ulti-chat) — PostCSS configuration for Tailwind
 
 ## Platform Requirements
 
 **Development:**
-- Node.js 18+
-- npm 8+
-- Browser with ES2020+ support
-- 2GB+ RAM for Next.js dev server + build
+- Node.js 18+ (inferred from Next.js 16 support)
+- npm 8+ (for `--legacy-peer-deps` flag)
 
 **Production:**
-- Deployment target: Vercel (primary; supports Node.js runtime)
-- Alternative: Any Node.js 18+ hosting (self-hosted with `next start`)
-- Environment: `NODE_ENV=production`
-
-## CDN & Asset Delivery
-
-**Images:**
-- Next.js Image Optimization CDN (Vercel)
-- Formats: AVIF, WebP with fallback to original
-- Sources:
-  - Local: `/public/assets/` (SVGs, screenshots)
-  - Remote: `ktg.one`, Hostinger WordPress media
-
-**Fonts:**
-- Google Fonts (via Next.js Font API):
-  - Syne: Display font (weights: 400, 700, 800)
-  - Inter: Body font (weights: 400)
-  - Font swap strategy for performance
+- Vercel deployment (main app) — Primary host for `ktg.one`
+- Google Cloud Run (ulti-chat) — AI Studio deployment target (`DISABLE_HMR` env var disables hot module reload during agent edits)
+- Vercel Postgres — Managed PostgreSQL database
+- Vercel Blob — File storage service
+- External WordPress instance at `lawngreen-mallard-558077.hostingersite.com` — Blog data source
 
 ---
 
-*Stack analysis: 2026-03-21*
+*Stack analysis: 2026-03-23*

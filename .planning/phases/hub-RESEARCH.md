@@ -10,30 +10,31 @@
 
 The hub chat feature at `/hub/chat` uses `ai@6.0.5`, `@ai-sdk/react@3.0.137`, `@ai-sdk/google@3.0.52`, `@ai-sdk/anthropic@3.0.63`, `@ai-sdk/openai@3.0.12`, and `zod@3.25.76` (the lockfile pins to 3.25.76 despite package.json specifying ^4.3.6).
 
-The current `src/app/api/hub/chat/route.js` has **three breaking API mismatches** with the installed SDK version:
+~~The current `src/app/api/hub/chat/route.js` has **three breaking API mismatches** with the installed SDK version~~
 
-1. `result.toDataStreamResponse()` — removed, replaced by `result.toUIMessageStreamResponse()`
-2. `maxSteps: 5` in `streamText(...)` — removed, replaced by `stopWhen: stepCountIs(5)`
-3. `providerOptions.google.useSearchGrounding` — removed from `@ai-sdk/google@3.0.52`, replaced by `google.tools.googleSearch({})`
+**ALL 4 API BUGS FIXED** (verified 2026-03-24 by reading actual `route.js`):
 
-Additionally, the `useChat` hook from `@ai-sdk/react@3.0.137` sends `UIMessage[]` to the route, but `streamText` expects model-compatible messages. The route must call `convertToModelMessages(messages)` before passing to `streamText`.
+1. ✅ `convertToModelMessages(messages)` — applied at line 211
+2. ✅ `stopWhen: stepCountIs(5)` — applied at line 239 (was `maxSteps`)
+3. ✅ `result.toUIMessageStreamResponse()` — applied at line 243 (was `toDataStreamResponse`)
+4. ✅ `google.tools.googleSearch({})` — applied at lines 222–230 (conditional, no custom tools alongside)
 
-**Primary recommendation:** Fix the four API mismatches in `route.js` before any new features. The multi-provider routing pattern, tool definitions with `parameters`, and provider selection logic are all sound and require no changes.
+The multi-provider routing pattern, tool definitions with `parameters`, and provider selection logic are all sound and require no changes. Route is ready for live testing.
 
 ---
 
 ## CURRENT CODE AUDIT
 
-### `src/app/api/hub/chat/route.js` — Known Bugs
+### `src/app/api/hub/chat/route.js` — Bugs (ALL FIXED 2026-03-23)
 
-| Line | Current (broken) | Correct |
-|------|-----------------|---------|
-| `maxSteps: 5` in `streamText()` | silently ignored | `stopWhen: stepCountIs(5)` |
-| `result.toDataStreamResponse()` | runtime crash | `result.toUIMessageStreamResponse()` |
-| `providerOptions.google.useSearchGrounding: true` | no effect (property removed) | `tools: { google_search: google.tools.googleSearch({}) }` |
-| `messages` passed directly to `streamText` | UIMessage format, wrong schema | `await convertToModelMessages(messages)` first |
+| Fix | Was | Now |
+|-----|-----|-----|
+| ✅ `stopWhen` | `maxSteps: 5` (silently ignored) | `stopWhen: stepCountIs(5)` at line 239 |
+| ✅ `toUIMessageStreamResponse` | `toDataStreamResponse()` (runtime crash) | `result.toUIMessageStreamResponse()` at line 243 |
+| ✅ `google.tools.googleSearch` | `providerOptions.google.useSearchGrounding` (no effect) | conditional at lines 222–230 |
+| ✅ `convertToModelMessages` | messages passed directly (UIMessage format mismatch) | `convertToModelMessages(messages)` at line 211 |
 
-**Verified by:** Direct inspection of `node_modules/ai/dist/index.js` and `node_modules/@ai-sdk/google/dist/index.js`.
+**Verified by:** Direct inspection of `node_modules/ai/dist/index.js` and `node_modules/@ai-sdk/google/dist/index.js`, plus reading actual `route.js` (2026-03-24).
 
 ### `src/app/hub/chat/page.jsx` — State
 
@@ -538,7 +539,8 @@ No test suite is configured per `CLAUDE.md`. Validation is manual browser testin
 
 ### Wave 0 Gaps
 
-- [ ] Fix `route.js` bugs before any other feature work (4 API mismatches listed above)
+- [x] ~~Fix `route.js` bugs before any other feature work~~ — All 4 API mismatches fixed (2026-03-23)
+- [ ] Add API keys to `.env.local` and run live end-to-end test (`vercel env pull .env.local`)
 
 ---
 
