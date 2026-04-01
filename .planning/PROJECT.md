@@ -1,5 +1,20 @@
 # KTG One (ktgv2)
 
+## Current milestone: v1.1 — Hub production evidence, polish, merge
+
+**Planning scope:** **Marketing** = public site + blog + shell QA (see `.planning/phases/01-marketing-shell/`). **Hub chat** = `/hub/chat` + `/api/hub/*` on the integration branch until merge. **Post-merge** = single app on `main`, hub routes part of normal deploy; no `src/app/ulti-chat/`. Details: `.planning/STATE.md` → *Planning scope*.
+
+**Goal:** Close hub chat **Phase 6** with recorded smoke on **Vercel** (you control secrets in the dashboard; this repo cannot verify them), deliver agreed **Phase 7** UI polish or explicitly defer items, merge **`feature/ulti-chat-integration`** when green, then resume **public-site** roadmap work (e.g. 01-02 QA, WordPress/SEO).
+
+**Target outcomes:**
+
+- [ ] Phase 6 checklist recorded (preview/prod): send message, stream, model switch, personas — match `.planning/STATE.md`
+- [ ] Phase 7 scoped: e.g. status dots, Iosevka, preset UX — **subset acceptable**; mark rest deferred in `STATE.md`
+- [ ] Branch merged to `main` with passing deploy
+- [x] `AGENTS.md` / planning aligned with hub routes (markdown; 2026-04-01)
+
+**Not implied by “chat works once”:** Entire hub UI “finished” — large `page.jsx`, placeholder nav links, optional skills/MCP still exist; “done” is a product call after Phase 7/deferrals.
+
 ## What This Is
 
 A public marketing and portfolio site for KTG (“KTG One”) — long-form storytelling, GSAP-driven motion, and a headless WordPress–backed blog — shipped as a Next.js App Router app on Vercel. Content for posts and embedded media is loaded from the WordPress REST API; the in-repo app owns layout, animation, SEO surfaces, and deployment.
@@ -18,12 +33,14 @@ Visitors reliably get a fast, credible brand experience and can read blog conten
 - ✓ Blog and SEO artifacts: blog routes, JSON-LD where implemented, sitemap generation — `src/app/blog/`, `src/app/sitemap.js` — existing
 - ✓ Styling system: Tailwind v4 + global theme tokens — `src/app/globals.css`, `tailwind.config.js`, `postcss.config.mjs` — existing
 - ✓ Production deploy target Vercel with documented install constraints — `vercel.json`, `package.json` — existing
+- ✓ Hub AI chat route (feature branch) — `/hub/chat` UI + `/api/hub/chat` streaming API — see `.planning/STATE.md` Phase 6–7
 
 ### Active
 
 - [ ] Resolve open codebase concerns in priority order (dependency cleanup, experimental `ktg*` trees, WordPress fetch timeouts, sitemap pagination beyond 100 posts) per `.planning/codebase/CONCERNS.md`
-- [ ] Align implementation with `AGENTS.md` where it differs (e.g. `cache: 'no-store'` vs current `revalidate` usage) with an explicit decision
-- [ ] Populate `openmemory.md` as a living index when major components or integrations stabilize
+- [x] WordPress `no-store` vs `revalidate` — documented under **Constraints**; policy is explicit (2026-04-01 reconciliation)
+- [x] `openmemory.md` — living index + planning SSOT note (2026-04-01 reconciliation)
+- [x] `AGENTS.md` / `CLAUDE.md` — aligned with `/hub/chat` + `_reference/ulti-chat/` (2026-04-01 reconciliation)
 
 ### Out of Scope
 
@@ -45,6 +62,15 @@ Visitors reliably get a fast, credible brand experience and can read blog conten
 - **Hosting:** Vercel; `installCommand` uses `npm install --legacy-peer-deps` per `vercel.json`
 - **Content:** Blog copy and HTML bodies ultimately originate in WordPress; trust and sanitization assumptions apply (see CONCERNS)
 
+### WordPress fetch policy (documentation)
+
+Documented behaviour in `src/lib/wordpress.js` (do not “fix” via drive-by edits unless a task explicitly asks for code):
+
+- **Connection / health checks** use non-cached fetches (`cache: 'no-store'`) so diagnostics see current CMS reachability.
+- **Post list and post-by-slug reads** use time-based revalidation (`next: { revalidate: 60 }` and equivalents) so pages stay fresh without hammering WordPress.
+
+Any tension with `AGENTS.md` wording is **resolved here**: both patterns are intentional for different call sites — not a silent mismatch.
+
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
@@ -54,4 +80,4 @@ Visitors reliably get a fast, credible brand experience and can read blog conten
 | npm + package-lock as primary install | CI uses `npm ci` | — Pending |
 
 ---
-*Last updated: 2026-03-21 after GSD project initialization*
+*Last updated: 2026-04-01 — Planning docs reconciled with codebase (`/hub/chat`, no `src/app/ulti-chat/`); see `.planning/MILESTONES.md`*

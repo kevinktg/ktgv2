@@ -33,7 +33,8 @@
 
 ## Current Tasks (ONLY THESE)
 
-- [ ] Final polish pass — check all pages render correctly (/, /blog, /expertise, /hub, /hub/snippets, /validation)
+- [ ] Final polish pass — check all pages render correctly (/, /blog, /expertise, /hub, /hub/snippets, **`/hub/chat`**, /validation)
+- [ ] Hub chat (same branch until merge): verify **`/hub/chat`** end-to-end — message send, streaming, model switch, env keys on **Vercel** (see `.planning/STATE.md` Phase 6 checklist)
 - [ ] Lighthouse audit all routes — target 90+
 - [ ] Verify WordPress blog integration still pulling posts
 - [ ] Deploy to Vercel

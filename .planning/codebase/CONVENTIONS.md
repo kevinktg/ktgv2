@@ -1,226 +1,609 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-03-21
+**Analysis Date:** 2026-03-23 · **2026-04:** **`src/app/ulti-chat/`** is **not** in the App Router. **Production** code is one architecture: **Main App** + integrated **`src/app/hub/chat/page.jsx`** (**JSX**). A gitignored **`_reference/ulti-chat/`** folder may still hold **TypeScript** AI Studio patterns for historical comparison — do not treat it as a second routable product.
 
-## Naming Patterns
+## Overview
 
-**Files:**
-- Components: PascalCase with `.jsx` extension (e.g., `HeroSection.jsx`, `ValidationSection.jsx`)
-- Utilities/hooks: camelCase with `.js` extension (e.g., `usePrefersReducedMotion.js`, `utils.js`)
-- Pages: lowercase with `.jsx` extension (e.g., `page.jsx`, `layout.jsx`)
-- UI components: PascalCase grouped in `src/components/ui/` (e.g., `button.jsx`, `card.jsx`)
+**Primary (all shipped routes including `/hub/chat`):**
 
-**Functions:**
-- React components: PascalCase, exported as named exports (e.g., `export function HeroSection()`)
-- Helper functions: camelCase (e.g., `fetchWithTimeout()`, `getReducedMotion()`)
-- Custom hooks: camelCase with `use` prefix (e.g., `usePrefersReducedMotion()`)
-- Utility functions: camelCase descriptive names (e.g., `cn()`, `getFeaturedImage()`)
+1. **Main App** (`src/app/` + `src/components/`): Next.js 16, React 19, **JSX**, GSAP (marketing), Tailwind v4, Vercel AI SDK on the server for hub chat
 
-**Variables:**
-- State variables: camelCase (e.g., `hasPlayed`, `isMobile`, `isReady`)
-- References/refs: camelCase with `Ref` suffix (e.g., `sectionRef`, `textRef`, `quoteRefs`)
-- Constants: UPPER_SNAKE_CASE for module-level constants (e.g., `GRAPHITE_END_VIEWPORT_PAD`, `REQUEST_TIMEOUT`, `PARALLAX_TOP`)
-- Data objects: descriptive camelCase or as provided by props (e.g., `philosophyData`, `auditData`, `blogPosts`)
+**Historical / reference only:**
 
-**Types:**
-- No TypeScript: codebase uses JSX without TypeScript
-- JSDoc comments for type hints when needed (e.g., `/** @type {import('next').NextConfig} */`)
-
-## Code Style
-
-**Formatting:**
-- No explicit formatter configured (no `.prettierrc` or ESLint config detected)
-- Appears to follow Next.js default conventions
-- Spacing: 2-space indentation (observed in all files)
-- Trailing semicolons: used consistently
-- Quotes: double quotes for strings, single quotes avoided
-
-**Linting:**
-- ESLint v9 installed but no configuration file present
-- Relies on `next lint` command from package.json
-- Next.js provides default linting rules
-
-**Code organization:**
-- Imports grouped logically: React/Next imports first, then third-party libraries, then local imports
-- Path aliases used throughout: `@/` points to `src/` directory
-- "use client" directive at top of client components (e.g., `HeroImages.jsx`, `ValidationSection.jsx`)
-- Server-side functions/data fetching at top level (e.g., `app/page.jsx` uses `async` function, `getPosts()`)
-
-## Import Organization
-
-**Order:**
-1. React and Next.js imports (e.g., `import { useRef, forwardRef } from "react"`)
-2. Third-party libraries (e.g., `import gsap from "gsap"`, `import Link from "next/link"`)
-3. Local components (e.g., `import { SkipButton } from "@/components/SkipButton"`)
-4. Local utilities/hooks (e.g., `import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion"`)
-
-**Path Aliases:**
-- `@/` maps to `src/` directory
-- Used consistently for all local imports
-- Examples: `@/components/`, `@/lib/`, `@/app/`
-
-**Barrel Files:**
-- Index files used in `ui/` and `shadcn-studio/` directories
-- Export components/subcomponents from central location
-- Example: `src/components/shadcn-studio/button/index.js` exports button variants
-
-## Error Handling
-
-**Patterns:**
-- **Try-catch with fallback**: Used in server-side data fetching (e.g., `wordpress.js`)
-  ```javascript
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Error: ${response.status}`);
-      // Fallback logic or return empty/default
-      return [];
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error message:', error);
-    return null; // or [] or default value
-  }
-  ```
-
-- **Graceful degradation**: External API failures don't crash the app
-  - WordPress integration in `src/lib/wordpress.js` returns empty array on failure
-  - `getPosts()` returns `[]` if API unavailable
-  - `getPostBySlug()` returns `null` if post not found
-
-- **Timeout handling**: Fetch requests use abort controller for timeout
-  ```javascript
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-  ```
-
-- **Ref safety checks**: Guard against null refs before using
-  ```javascript
-  if (!sectionRef.current) return;
-  if (!horizontalScrollRef.current || !shutterRef.current) return;
-  ```
-
-- **Type safety in DOM access**: Check element existence before accessing properties
-  ```javascript
-  if (shutterRef.current?.children) {
-    gsap.set(shutterRef.current.children, {...});
-  }
-  ```
-
-## Logging
-
-**Framework:** `console` native methods (no external logging library)
-
-**Patterns:**
-- `console.error()` for failures (e.g., API errors, timeouts)
-- `console.warn()` for non-critical issues (e.g., fallback behavior)
-- `console.log()` avoided in production code (no examples found)
-- Error context included: error message + context (URL, response status)
-
-**Examples from `wordpress.js`:**
-```javascript
-console.error('WordPress connection test timed out');
-console.error(`WordPress API error: ${response.status} - ${response.statusText}`);
-console.error(`URL: ${url}`);
-console.warn('Attempting fetch without _embed parameter...');
-```
-
-## Comments
-
-**When to Comment:**
-- Algorithm explanation or non-obvious logic (e.g., GSAP animation phases)
-- Configuration decisions (e.g., "OPTIMIZATION: Use swap for font loading")
-- References to external patterns (e.g., "Graphite.com-style scrolling")
-- Warning about browser/environment limitations
-- Workaround explanations (e.g., sessionStorage hydration mismatch)
-
-**JSDoc/Comments:**
-- Block comments used for sections (e.g., `// PHASE 1: THE SWOOP`)
-- Inline comments for specific lines when context is non-obvious
-- Component comments explain purpose and constraints
-- Configuration comments explain why decisions were made
-
-**Examples:**
-```javascript
-// OPTIMIZATION: Check sessionStorage only on client side to prevent hydration mismatch
-// PHASE 1: THE SWOOP (White -> Black) - Run immediately on mount
-// Register ScrollTrigger safely (avoiding SSR errors)
-// Wait for all refs to be ready
-```
-
-## Function Design
-
-**Size:** Functions kept focused and single-purpose
-- Animation setup isolated in `useGSAP()` hooks
-- Data fetching in separate utility functions
-- Component rendering logic separated from animation setup
-- Typical function length: 20-100 lines for component logic, 10-30 for utilities
-
-**Parameters:**
-- Destructuring used for component props
-- Default parameters for optional values
-- Props fallback to defaults within component when not passed
-- Example:
-  ```javascript
-  export function SplitText({
-    children,
-    className = "",
-    wordClass = "split-word",
-    charClass = "split-char",
-  }) { ... }
-  ```
-
-**Return Values:**
-- React components: return JSX/null
-- Data fetchers: return data or empty array/null on failure
-- Hooks: return state, callbacks, or computed values
-- Utilities: return computed values or transformed data
-
-## Module Design
-
-**Exports:**
-- Named exports preferred for components and functions
-- Default exports used for page routes
-- Example:
-  ```javascript
-  export function HeroSection() { ... }
-  export function PhilosophySection() { ... }
-  ```
-
-**Barrel Files:**
-- Used in `ui/` directory for component consolidation
-- Provide single import point for related components
-- Example: `src/components/ui/index.js` exports all UI primitives
-
-**Component Structure:**
-- State management (useState) at top
-- Effects/animations (useGSAP, useEffect) in middle
-- Render JSX at bottom
-- Helper components defined above main export
-
-## React Patterns
-
-**Client vs Server:**
-- "use client" directive for interactive components requiring hooks
-- Server components default for data fetching (app/page.jsx)
-- Lazy loading used for heavy components (e.g., HeroImages)
-  ```javascript
-  const HeroImages = lazy(() => import("@/components/HeroImages").then(mod => ({ default: mod.HeroImages })));
-  ```
-
-**Props:**
-- Functional components with destructured props
-- Forward refs used when parent access needed
-  ```javascript
-  export const HeroSection = forwardRef((props, ref) => {
-    const internalRef = ref || useRef(null);
-  });
-  ```
-
-**Suppression:**
-- `suppressHydrationWarning` used to suppress hydration mismatches (intended usage)
-- Applied to sections where client-only state doesn't affect markup
+2. **Legacy ulti-chat** (`_reference/ulti-chat/` if present): was Next 15 + **TSX** + different animation stack — useful for diffing old prompts/UI **only**; never import into `src/`
 
 ---
 
-*Convention analysis: 2026-03-21*
+## File Naming Conventions
+
+### Main App (JSX)
+
+**Components:**
+- Format: PascalCase `.jsx`
+- Examples: `HeroSection.jsx`, `ExpertiseSection.jsx`, `DockNav.jsx`, `ContactCTA.jsx`
+- Location: `src/components/` or `src/components/{category}/`
+- Single export per file (default function)
+
+**Pages:**
+- Format: kebab-case when segment, PascalCase function
+- Examples: `src/app/page.jsx`, `src/app/blog/[slug]/page.jsx`, `src/app/hub/snippets/[id]/page.jsx`
+
+**Hooks:**
+- Format: camelCase `.js`
+- Example: `src/lib/lenis.jsx` (custom Lenis context)
+
+**Utilities:**
+- Format: camelCase `.js`
+- Examples: `src/lib/utils.js`, `src/lib/wordpress.js`, `src/lib/snippets/storage.js`
+
+**API Routes:**
+- Format: kebab-case directory + `route.js`
+- Examples: `src/app/api/hub/snippets/route.js`, `src/app/api/hub/snippets/[id]/route.js`
+
+**Database:**
+- Format: camelCase `.js`
+- Examples: `src/lib/db/schema.js`, `src/lib/db/client.js`
+
+### Legacy ulti-chat reference (TypeScript) — `_reference/` only
+
+**Components:**
+- Format: PascalCase `.tsx`
+- Currently only one main page: `app/page.tsx` with inline component definitions (no separate component files)
+- Uses `React.forwardRef` for component refs where needed
+
+**Hooks:**
+- Format: camelCase `.ts`
+- Example: `hooks/use-mobile.ts`
+
+**Utilities:**
+- Format: camelCase `.ts`
+- Example: `lib/utils.ts`
+
+**Layouts & Pages:**
+- Format: kebab-case directory + `.tsx` file
+- Examples: `app/layout.tsx`, `app/page.tsx`
+
+---
+
+## Naming Patterns
+
+### Variables & Functions
+
+**Main App:**
+```javascript
+// camelCase for all variables and functions
+const DOT_COUNT = 12 // CONSTANTS in SCREAMING_SNAKE_CASE
+const LAG_FACTOR = 0.2 // Configuration constants
+const mouse = { x: 0, y: 0 } // Object state
+const render = () => { } // Function declaration
+const onMouseMove = (e) => { } // Event handlers: on{Event}
+const handleSubmit = () => { } // Form handlers: handle{Action}
+const isActive = pathname === "/" // Boolean flags: is/has{Condition}
+const dotsRef = useRef([]) // Refs: {name}Ref
+const containerRef = useRef(null)
+const { isPlaying, duration } = metadata // Destructure at top of scope
+```
+
+**ulti-chat:**
+- Same patterns as main app, but with TypeScript interfaces:
+```typescript
+interface PersonaConfig {
+  id: string
+  name: string
+  prompt: string
+  isCustom: boolean
+}
+
+const PERSONAS: PersonaConfig[] = [ ... ]
+```
+
+### Component Props
+
+**Main App:**
+```javascript
+// Props destructured in function signature
+export function SnippetCard({ snippet, content }) {
+  // No prop validation (use runtime checks if needed)
+}
+
+// Props with children
+export function Layout({ children }) {
+  return <div>{children}</div>
+}
+```
+
+**ulti-chat:**
+```typescript
+// Props with type annotations
+export function Button({
+  className,
+  variant = 'default',
+  size = 'default',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'default' | 'outline'
+  size?: 'default' | 'sm'
+}) {
+  // ...
+}
+```
+
+### Styling & Classes
+
+**Naming Approach:**
+- Use Tailwind utility classes directly, no custom class names
+- Class names use full classNames, no abbreviations
+- Pattern: `"bg-black text-white hover:bg-white/10 transition-colors"`
+
+**Important:** Text is intentionally lowercase via CSS:
+```css
+h1, h2, h3, h4, h5, h6 {
+  text-transform: lowercase; /* Brand convention, not a bug */
+}
+```
+
+**Color Scheme (Main App):**
+- Background: `bg-black` / `bg-[#000000]`
+- Text: `text-white` / `text-white/40` (opacity modifier)
+- Accent: `#00f0ff` (cyan) for interactive/AI elements → `bg-[#00f0ff]`, `text-[#00f0ff]`
+- Secondary: `bg-emerald-500/90` for CTAs
+- Use opacity: `white/10`, `white/20`, `white/40`, `white/60` for layering
+
+**Font Specification:**
+- Syne (branding): Use `font-[family-name:var(--font-syne)]` NOT `font-syne`
+- Inter (body): Use `font-[family-name:var(--font-inter)]` or default (Inter is body)
+- Example:
+```jsx
+<h1 className="font-[family-name:var(--font-syne)] text-4xl font-bold lowercase">
+  Heading
+</h1>
+```
+
+### Type Names (ulti-chat only)
+
+```typescript
+// Interfaces for data models
+interface PersonaConfig { }
+interface Message { }
+
+// Types for unions/generics
+type MessageRole = 'user' | 'assistant'
+type PersonaId = 'default' | 'coder' | 'creative' | 'analyst'
+```
+
+---
+
+## Import Organization
+
+### Main App
+
+**Order (preferred):**
+1. Next.js imports (`next/`, `next/font/google`, `next/navigation`)
+2. React imports (`react`, `react-dom`)
+3. External libraries (GSAP, Three, UI libraries)
+4. Local imports (`@/`, relative paths)
+
+**Example:**
+```javascript
+import { useRef } from 'react'
+import Link from 'next/link'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+```
+
+### Path Aliases
+
+**Main App:**
+- `@/*` → `./src/*`
+- Always use `@/` for imports within src (never relative `../../../`)
+
+**ulti-chat:**
+- `@/*` → `./*` (relative to ulti-chat root, not src)
+- Imports like: `import { cn } from '@/lib/utils'` resolve to `./lib/utils.ts`
+
+### "use client" Directive
+
+**Main App:**
+- Required for components using:
+  - GSAP (`useGSAP` hook)
+  - Browser APIs (event listeners, window, document)
+  - React hooks (useState, useRef, useEffect)
+  - Scroll effects or animations
+- Place at top of file:
+```javascript
+'use client'
+
+import { useRef } from 'react'
+import { useGSAP } from '@gsap/react'
+
+export function CursorDot() {
+  // ...
+}
+```
+
+**Servers Components (default, no "use client"):**
+- Root layout (`src/app/layout.jsx`)
+- Page files unless they need client interactivity
+- API routes (they're inherently server-side)
+
+---
+
+## Code Style
+
+### Formatting
+
+**Tool:** No automatic formatter configured (Prettier not in devDependencies)
+- Consistent spacing enforced by Next.js ESLint (eslint ^9)
+- **Style:** 2-space indentation (inferred from examples)
+
+**Linting:**
+- Main app: `next lint` (Next.js ESLint config)
+- ulti-chat: `eslint .` (extends "next")
+
+**Line Length:**
+- No strict limit, but keep readable (~100 chars for JSX attributes)
+
+### Semicolons
+
+- **Not required** — consistently omitted throughout codebase
+- Example: `const value = 42` not `const value = 42;`
+
+### Quotes
+
+- **Double quotes** for JSX attributes: `className="bg-black"`
+- **Single quotes** for JS strings: `'use client'`, `const str = 'hello'`
+- Exception: JSDoc strings use double quotes
+
+### Trailing Commas
+
+- Used in multi-line objects/arrays:
+```javascript
+const config = {
+  name: 'value',
+  enabled: true,
+}
+
+const arr = [
+  'item1',
+  'item2',
+]
+```
+
+---
+
+## Error Handling
+
+### Pattern: Try-Catch with Fallback
+
+**Synchronous API calls (main app):**
+```javascript
+const fetchSnippets = async () => {
+  try {
+    setLoading(true)
+    const response = await fetch('/api/hub/snippets')
+    if (response.ok) {
+      const data = await response.json()
+      setSnippets(data)
+    }
+  } catch (error) {
+    console.error('Error fetching snippets:', error)
+  } finally {
+    setLoading(false)
+  }
+}
+```
+
+**Key patterns:**
+- Always use try-catch for async operations
+- Check `response.ok` before parsing JSON
+- Catch errors with descriptive console.error
+- Use finally block for cleanup (loading state, etc.)
+- Return fallback data on error, don't throw to user
+
+**Server-side (API routes):**
+```javascript
+export async function GET() {
+  try {
+    const snippets = await getAllSnippets()
+    return NextResponse.json(snippets)
+  } catch (error) {
+    console.error('Error fetching snippets:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch snippets' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+**Validation on POST:**
+```javascript
+export async function POST(request) {
+  try {
+    const body = await request.json()
+    const { title, description, content } = body
+
+    // Validate required fields BEFORE processing
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: 'Missing required fields: title, content' },
+        { status: 400 }
+      )
+    }
+
+    // Proceed with business logic
+    const result = await createSnippet({ title, description, content })
+    return NextResponse.json(result, { status: 201 })
+  } catch (error) {
+    console.error('Error creating snippet:', error)
+    return NextResponse.json(
+      { error: 'Failed to create snippet' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+### Error Handling in Components
+
+**Silently fall back on errors (non-critical):**
+```javascript
+const withContent = await Promise.all(
+  snippets.map(async (snippet) => {
+    try {
+      const content = await getSnippetContent(snippet.blob_url)
+      return { ...snippet, content }
+    } catch (error) {
+      // Silently return empty content, don't throw
+      return { ...snippet, content: '' }
+    }
+  })
+)
+```
+
+**Never:**
+- Throw uncaught errors in event handlers
+- Use `console.log` for errors (use `console.error`)
+- Ignore async errors in useEffect
+
+---
+
+## Logging
+
+**Framework:** `console.*` (no logging library)
+
+**Patterns:**
+```javascript
+// Errors (always include context)
+console.error('Error fetching snippets:', error)
+console.error('Component render failed:', { component: 'HeroSection', error })
+
+// Development info (rare, prefer not to commit)
+console.log('Debug info:', variable)
+
+// Never use console for production features
+```
+
+### When to Log
+
+- **DO:** Errors, edge cases, unexpected conditions
+- **DON'T:** Normal flow, variable values (use debugger), component renders
+
+---
+
+## Comments
+
+### When to Comment
+
+- Explain WHY, not WHAT (code shows what it does)
+- Mark OPTIMIZATION sections: `// OPTIMIZATION: [description]`
+- Mark FIX sections: `// FIX: [problem solved]`
+- Mark CRITICAL/IMPORTANT: `// CRITICAL: [reason]`
+
+**Examples from codebase:**
+```javascript
+// OPTIMIZATION: Use 'swap' to ensure branding fonts load even on slower connections
+const syne = Syne({
+  display: 'swap',
+  // ...
+})
+
+// OPTIMIZATION: Reduced from 21 to 12 elements for ~50% GPU memory reduction
+const SQUARE_COUNT = 12
+
+// CRITICAL: CursorDot must be last in render tree to stay on top of all stacking contexts
+<CursorDot />
+
+// FIX: Changed from hsl(var(--background)) to transparent
+background-color: transparent !important
+```
+
+### JSDoc/TSDoc
+
+**Main App:** Rare, used only for utility functions
+
+```javascript
+/**
+ * Upload a snippet markdown file to Vercel Blob
+ * @param {string} filename - Name of the file
+ * @param {string} content - Markdown content
+ * @returns {Promise<{url: string}>} Blob URL
+ */
+export async function uploadSnippet(filename, content) {
+  // ...
+}
+```
+
+**ulti-chat:** Not enforced, but TypeScript types serve as documentation
+
+---
+
+## Function Design
+
+### Size Guidelines
+
+- Keep functions under 50 lines when possible
+- Extract complex inline logic to helper functions
+- One responsibility per function
+
+### Parameters
+
+- Destructure props in React components:
+```javascript
+export function SnippetCard({ snippet, content }) { }
+```
+
+- Pass objects for multiple related parameters (don't repeat)
+- Limit to 3-4 parameters; use config object for more
+
+### Return Values
+
+- Return data, not JSX from utility functions
+- Components always return JSX/ReactNode
+- Async functions return Promise<Type>
+
+### Async Patterns
+
+**Prefer Promise chains for simple cases:**
+```javascript
+useEffect(() => {
+  fetchSnippets()
+}, [])
+
+const fetchSnippets = async () => {
+  try {
+    // ...
+  } catch (error) {
+    // ...
+  }
+}
+```
+
+**Avoid unnecessary async/await nesting:**
+```javascript
+// ✓ Good
+const data = await fetch(url).then(r => r.json())
+
+// ✗ Avoid
+const data = await (async () => {
+  return await fetch(url).then(r => r.json())
+})()
+```
+
+---
+
+## Module Design
+
+### Exports
+
+**Named exports for utilities:**
+```javascript
+export function cn(...inputs) {
+  return twMerge(clsx(inputs))
+}
+
+export async function uploadSnippet(filename, content) {
+  // ...
+}
+```
+
+**Default exports for components:**
+```javascript
+export default function Home() {
+  return <div>Home</div>
+}
+
+// OR named export (both used in codebase)
+export function ContactCTA() {
+  return <section>...</section>
+}
+```
+
+### Barrel Files
+
+**Used minimally.** Example:
+- `src/components/ui/` has shadcn components exported directly (one per file)
+- No re-export index files observed in main app
+
+### Singleton Patterns
+
+**Global instances (use Context for access):**
+- Lenis scroll instance: `src/lib/lenis.jsx` exports context/hook
+- Do NOT create multiple instances per component
+
+---
+
+## GSAP-Specific Conventions (Main App)
+
+**Always use `useGSAP` hook for animations:**
+```javascript
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+
+export function CursorDot() {
+  const containerRef = useRef(null)
+
+  useGSAP(() => {
+    gsap.set(containerRef.current, { opacity: 1 })
+  }, { scope: containerRef })
+}
+```
+
+**Cleanup rules:**
+- GSAP animations are cleaned up automatically by `useGSAP` hook
+- Always specify `scope` when animating refs within a specific container
+- Kill animations explicitly if needed: `gsap.killTweensOf(target)`
+
+**Performance:**
+```javascript
+// Use will-change for animated elements (handled via CSS)
+// Extract inline styles to constants to prevent recreation
+const TECH_GRID_STYLE = {
+  backgroundImage: `...`,
+  backgroundSize: '40px 40px',
+  contain: 'layout style paint',
+}
+
+// Memoize components that don't need frequent updates
+export const GeometricBackground = memo(function GeometricBackground({ fixed }) {
+  // ...
+})
+```
+
+---
+
+## Component Memoization
+
+**Use React.memo for:**
+- Components that receive the same props frequently
+- Visual/background components that don't change
+- Example: `GeometricBackground`, global UI components
+
+```javascript
+export const GeometricBackground = memo(function GeometricBackground({ fixed = false }) {
+  return <div>...</div>
+})
+```
+
+**Avoid memo for:**
+- Components with many dynamic props
+- Components that always re-render (page sections)
+- Premature optimization
+
+---
+
+## Historical: main app vs legacy `_reference/ulti-chat`
+
+| Aspect | Main App (shipped) | `_reference/ulti-chat` (optional local copy) |
+|--------|-------------------|-----------------------------------------------|
+| **Language** | JSX | TSX (if reference kept) |
+| **Next.js** | 16 App Router | Was 15 nested tree — **not** in `src/app/` anymore |
+| **Chat route** | `/hub/chat` | N/A (reference only) |
+
+**Rule:** All new work lives under **`src/`** Main App conventions. Do not copy TSX patterns from reference into production paths without an explicit porting task.
+
+---
+
+*Convention analysis: 2026-03-23 · reconciled 2026-04-01*

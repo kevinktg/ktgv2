@@ -1,231 +1,203 @@
 # Architecture
 
-**Analysis Date:** 2026-03-21
+**Analysis Date:** 2026-03-23 · **2026-04:** `src/app/ulti-chat/` **removed** from the App Router. Hub AI chat is **`src/app/hub/chat/page.jsx`** + **`src/app/api/hub/chat/route.js`** inside the **same** Next.js 16 app.
 
 ## Pattern Overview
 
-**Overall:** Next.js App Router with Section-Based Page Layout + GSAP Animation Orchestration
+**Overall:** Next.js 16 App Router monolith (marketing + blog + hub tools + integrated hub chat)
 
 **Key Characteristics:**
-- Server-rendered pages with progressive client-side enhancements (hybrid SSR/Client)
-- Modular section components that manage their own animations and state
-- Scroll-driven animations using GSAP ScrollTrigger + Lenis for smooth scrolling
-- Global cursor and background effects using Three.js and canvas-based geometry
-- WordPress integration for dynamic content (blog posts)
+- Primary app: Next.js 16 App Router with React 19, server components + selective client boundaries
+- **Hub chat:** Integrated route **`/hub/chat`**; streaming API **`/api/hub/chat`** (Vercel AI SDK) — not a nested Next project
+- Data persistence: Vercel Postgres (Drizzle ORM) + Vercel Blob for large content
+- Animation layer: GSAP 3 + ScrollTrigger for advanced animations, Lenis for smooth scrolling
+- Styling: Tailwind CSS v4 + shadcn/ui primitives + custom brand components
+- Rendering: Geometric background fixed behind all content; floating dock nav; custom cursor overlay
 
 ## Layers
 
-**Server Layer (App Router):**
-- Purpose: Handle page rendering, SSR data fetching, metadata generation
-- Location: `src/app/` (layout.jsx, page.jsx, blog routing)
-- Contains: Page routes, layouts, metadata, ISR configuration
-- Depends on: WordPress API client (`src/lib/wordpress.js`)
-- Used by: Browser requests, Next.js routing
+**Presentation Layer:**
+- Purpose: Render pages, sections, and UI primitives to users
+- Location: `src/components/`, `src/app/`
+- Contains: JSX section components (HeroSection, ExpertiseSection, etc.), shadcn/ui buttons/cards/inputs, custom brand UI
+- Depends on: Lib layer (utilities, hooks), GSAP, Lenis
+- Used by: Next.js router, layout system
 
-**Client Layer (Components):**
-- Purpose: Interactive UI, animations, event handling
-- Location: `src/components/` (marked with "use client")
-- Contains: Page sections (Hero, Expertise, Validation, Philosophy, Blog), UI primitives, animated elements
-- Depends on: GSAP, Lenis, Three.js, Radix UI primitives
-- Used by: Server components via composition, layout wrapping
+**Page/Route Layer:**
+- Purpose: Handle Next.js App Router entry points and request handling
+- Location: `src/app/` (layout.jsx, page.jsx, [slug]/page.jsx, api/**/route.js)
+- Contains: Server components defining pages, API route handlers
+- Depends on: Lib layer (DB queries, external API clients), presentation layer
+- Used by: Next.js runtime
 
-**Utilities & Libraries:**
-- Purpose: Reusable functions, hooks, data clients
-- Location: `src/lib/` (utils, wordpress, usePrefersReducedMotion), `src/libs/` (lenis wrapper)
-- Contains: API clients, custom hooks, helper functions
-- Depends on: External APIs (WordPress), browser APIs (matchMedia)
-- Used by: Components and pages throughout the app
+**Business Logic / Data Layer:**
+- Purpose: Query databases, fetch external data, manage state transformation
+- Location: `src/lib/` (db/, snippets/, wordpress.js, lenis.jsx)
+- Contains: Drizzle queries, Vercel Blob operations, WordPress REST client, scroll utilities
+- Depends on: External APIs (Vercel Postgres, Vercel Blob, WordPress)
+- Used by: Page components, API routes, presentation layer
 
-**Styling Layer:**
-- Purpose: Theme configuration, CSS animations, Tailwind utilities
-- Location: `src/app/globals.css`, `tailwind.config.js`
-- Contains: CSS variables, animations, responsive breakpoints, design tokens
-- Depends on: Tailwind CSS, Tailwind plugins
-- Used by: All components via className attributes
+**Infrastructure Layer:**
+- Purpose: Configure runtime, define schemas, manage external service connections
+- Location: `src/lib/db/schema.js`, `next.config.js`, `package.json`, `.env.local`
+- Contains: Database schema, image remoting config, build optimization
+- Depends on: Next.js, Node.js
+- Used by: All layers
+
+**UI Primitives Layer:**
+- Purpose: Reusable, low-level button/card/input components
+- Location: `src/components/ui/` (shadcn exports), `src/components/shadcn-studio/`
+- Contains: Radix UI + Tailwind wrapped primitives
+- Depends on: Tailwind, Radix UI, clsx
+- Used by: All components
 
 ## Data Flow
 
-**Page Load (Home):**
+**Homepage Render:**
+1. Browser requests `/` → Next.js router resolves to `src/app/page.jsx`
+2. Server renders layout: `src/app/layout.jsx` wraps in `<ClientLayout>`
+3. Layout mounts four persistent globals: `GeometricBackground`, `DockNav`, child pages, `CursorDot`
+4. Page renders sections: `HeroSection` → `HeroTransition` → `ExpertiseSection` → `ExpertiseTransition` → `ValidationSection` → `PhilosophySection` → `ContactCTA` → `Footer`
+5. Each section imports components, fonts (`--font-syne`, `--font-inter`), and GSAP animations
+6. Client-side: Lenis hydrates for smooth scroll; GSAP/ScrollTrigger setup fires on mount; CursorDot tracks mouse
+7. On first visit: HeroSection plays intro animation, sets `sessionStorage.intro-completed`
+8. On return visits: Skip to main content automatically
 
-1. **Server renders layout** → loads global fonts (Syne, Inter), applies metadata, sets up viewport
-2. **Server fetches data** → `getPosts()` from WordPress API with timeout + fallback handling
-3. **Server renders page** → passes blog data to `BlogPreview`, wraps with sections
-4. **Client hydrates layout** → `ClientLayout` activates Lenis (smooth scroll) and GlobalCursor
-5. **Client mounts sections** → each component's `useGSAP` hook sets up ScrollTrigger animations
-6. **Scroll interaction** → GSAP ScrollTrigger listens to Lenis scroll, fires stagger animations
-7. **Session tracking** → sessionStorage flags prevent re-animating on return visits
+**Snippet Hub Data Flow:**
+1. User navigates to `/hub/snippets` → router resolves to `src/app/hub/snippets/page.jsx`
+2. Client component fetches: `GET /api/hub/snippets`
+3. API route `src/app/api/hub/snippets/route.js` calls `getAllSnippets()` from `src/lib/snippets/queries.js`
+4. Query layer calls Drizzle ORM: `db.select().from(snippets).orderBy(desc(snippets.created_at))`
+5. Drizzle resolves to Vercel Postgres; returns array of snippet metadata (id, title, description, blob_url, tags, etc.)
+6. Page receives snippet records; client component fetches content preview for each via `getSnippetContent(blob_url)`
+7. `getSnippetContent()` in `src/lib/snippets/storage.js` fetches from Vercel Blob URL
+8. Page renders grid of `<SnippetCard>` components with content preview
+9. User clicks snippet → routes to `/hub/snippets/[id]`
+10. Detail page fetches via `getSnippetById(id)` → renders full content via `react-markdown`
 
-**Blog Post Fetch (Server Side):**
-
-1. Page mounts → `getPosts(page, perPage)` called with `next: { revalidate: 60 }` (ISR)
-2. Fetch with timeout controller (10s) to prevent hanging
-3. On error → fallback attempt without `_embed` parameter
-4. Return parsed JSON array or empty array on timeout/404
-5. `BlogPreview` component receives array and renders grid
-
-**User Interaction (Scroll):**
-
-1. Lenis intercepts scroll events → smooth easing applied
-2. Lenis sync'd with GSAP ticker → `gsap.ticker.add()` called every frame
-3. ScrollTrigger updates → reads scroll position from Lenis proxy
-4. Animations fire → character stagger, horizontal scroll, shutter animations
-5. sessionStorage updated → tracks which animations have played this session
+**Blog Data Flow:**
+1. User navigates to `/blog` or `/blog/[slug]`
+2. Page component fetches from external WordPress instance: `lawngreen-mallard-558077.hostingersite.com`
+3. `src/lib/wordpress.js` wraps REST client; formats posts
+4. Posts rendered as cards on index; single post rendered on detail page
+5. No local database involvement; WordPress is source of truth for blog content
 
 **State Management:**
-
-- **Session-based animation state:** `sessionStorage` flags (intro-completed, expertise-revealed, validation-animated)
-- **Component-local state:** `useState` for hasPlayed, refRefs for GSAP targets
-- **Global window state:** `window.lenis` exposed for skip button access
-- **CSS variable state:** Theme colors, font variables via hsl(var(--name))
-- **No persistent client-side store:** Zustand listed in package.json but not actively used
+- **Client state:** React hooks (useState, useRef) in client components; minimal global state
+- **Server state:** Drizzle ORM queries; Vercel Postgres is source of truth for snippets
+- **Session state:** `sessionStorage` for intro skip flag; `window.lenis` for scroll instance access
+- **Animation state:** GSAP timeline objects; ScrollTrigger instances cached and cleaned on unmount
+- **UI state:** DockNav nav state (open/closed); CursorDot mouse position (window-level listener)
 
 ## Key Abstractions
 
-**Section Component Pattern:**
+**Global Layout Wrapper (`ClientLayout`):**
+- Purpose: Wraps entire app in Lenis scroll provider and initializes global cursor listener
+- Examples: `src/components/ClientLayout.jsx`
+- Pattern: Client component that injects Lenis context and GlobalCursor listener for all children
 
-- Purpose: Encapsulate animation logic + layout for each page region
-- Examples: `HeroSection`, `ValidationSection`, `PhilosophySection`, `ExpertiseSection`
-- Pattern:
-  - "use client" directive
-  - `useGSAP()` hook for animation setup
-  - `useRef()` for DOM targets
-  - Conditional animation based on `hasPlayed` sessionStorage flag
-  - ScrollTrigger + GSAP for complex animations
+**Geometric Background:**
+- Purpose: Fixed background layer with animated gradient blob and cursor reactivity
+- Examples: `src/components/GeometricBackground.jsx`
+- Pattern: `fixed` positioned container; uses Three.js for 3D particle effects or Canvas API; sits below all content via z-index
 
-**SplitText:**
+**Cursor Overlay (`CursorDot`):**
+- Purpose: Custom cursor rendering; must be **last** in render tree to stay above all stacking contexts
+- Examples: `src/components/CursorDot.jsx`
+- Pattern: Absolute positioned element tracking mouse; enforces render order by being last child of `<ClientLayout>`
 
-- Purpose: Wrap text in character/word spans for GSAP character stagger animations
-- Location: `src/components/SplitText.jsx`
-- Pattern: Maps input string → words array → characters spans with `.split-char` class
-- Usage: `<SplitText>{text}</SplitText>` wraps text for character-by-character animation
+**Dock Navigation (`DockNav`):**
+- Purpose: Floating icon navigation visible on all pages
+- Examples: `src/components/DockNav.jsx`
+- Pattern: Fixed positioned container; links to routes (/, /expertise, /hub, /validation, etc.); dismissible on mobile
 
-**GeometricBackground:**
+**Snippet Repository:**
+- Purpose: Centralized access to snippet metadata and content
+- Examples: `src/lib/snippets/queries.js`, `src/lib/snippets/storage.js`
+- Pattern: Query layer decouples API routes from Drizzle; Storage layer decouples routes from Vercel Blob
 
-- Purpose: Persistent layered background with moving squares, grid, wireframes
-- Location: `src/components/GeometricBackground.jsx`
-- Pattern:
-  - Memoized to prevent re-renders
-  - Uses CSS animations (`@keyframes animate-square`)
-  - Fixed or absolute positioning (fixed on layout, absolute on sections)
-  - mix-blend-mode: difference for visual effect
-  - 12 animated squares (reduced from 21 for performance)
+**WordPress Bridge:**
+- Purpose: Fetch and format blog posts from external WordPress instance
+- Examples: `src/lib/wordpress.js`
+- Pattern: Single REST client; handles URL construction, error handling; imports into blog page components
 
-**Lenis Scroll Bridge:**
-
-- Purpose: Sync smooth scroll (Lenis) with GSAP timeline updates
-- Location: `src/libs/lenis.jsx`
-- Pattern:
-  - Wraps ReactLenis component
-  - `gsap.ticker.add(update)` connects Lenis to GSAP frame loop
-  - `ScrollTrigger.scrollerProxy()` configures ScrollTrigger to read from Lenis
-  - Exposes `window.lenis` for programmatic scroll control
-  - Disables lagSmoothing to prevent desync
-
-**UI Component Library:**
-
-- Purpose: Reusable atomic components (button, card, badge, etc.)
-- Location: `src/components/ui/` (Radix UI + shadcn styled)
-- Pattern: Compound components with className merging (`cn()` utility)
-- Uses: `clsx` + `tailwind-merge` for conditional class composition
+**Scroll Utilities:**
+- Purpose: Initialize and export Lenis scroll instance for cross-component access
+- Examples: `src/libs/lenis.jsx` (note: named `libs` not `lib`)
+- Pattern: Exported singleton context hook; components access via `useContext()` or direct `window.lenis`
 
 ## Entry Points
 
-**Layout Root:**
-
+**Root Server Layout:**
 - Location: `src/app/layout.jsx`
-- Triggers: Server-side on every request
-- Responsibilities:
-  - Google Fonts loading (Syne, Inter)
-  - Global metadata (title, description, OG tags)
-  - Viewport configuration
-  - Speed Insights integration
-  - Root `html/body` setup
-  - ClientLayout wrapper (Lenis + GlobalCursor)
-  - GeometricBackground + CursorDot rendered globally
+- Triggers: Every page request in the app
+- Responsibilities: Load fonts (Syne, Inter); register metadata/viewport; wrap children in `<ClientLayout>`; mount globals (GeometricBackground, DockNav, CursorDot); inject SpeedInsights
 
-**Home Page:**
-
+**Homepage:**
 - Location: `src/app/page.jsx`
-- Triggers: Route `/`
-- Responsibilities:
-  - Fetch blog posts from WordPress
-  - Compose sections in order (Hero → Expertise → Validation → Philosophy → Blog → Footer)
-  - Handle blog fetch errors gracefully
-  - Set ISR revalidation (60s)
+- Triggers: Request to `/`
+- Responsibilities: Compose hero, expertise, validation, philosophy, contact, footer sections; disable intro skip on page-level
 
-**Blog Listing:**
+**Blog Index & Detail:**
+- Location: `src/app/blog/page.jsx`, `src/app/blog/[slug]/page.jsx`
+- Triggers: `/blog`, `/blog/[slug]` routes
+- Responsibilities: Fetch posts from WordPress; render grid or detail view; handle not-found case
 
-- Location: `src/app/blog/page.jsx`
-- Triggers: Route `/blog`
-- Responsibilities: Fetch and display blog posts grid
+**Hub Index, Snippets & Chat:**
+- Location: `src/app/hub/page.jsx`, `src/app/hub/snippets/page.jsx`, `src/app/hub/snippets/[id]/page.jsx`, **`src/app/hub/chat/page.jsx`**
+- Triggers: `/hub`, `/hub/snippets`, `/hub/snippets/[id]`, **`/hub/chat`**
+- Responsibilities: Redirect or render snippet browser; fetch from Postgres; render detail with markdown; **chat UI** for hub
 
-**Blog Dynamic Route:**
+**API: Snippet CRUD + Chat + Settings:**
+- Location: `src/app/api/hub/snippets/route.js`, `src/app/api/hub/snippets/[id]/route.js`, **`src/app/api/hub/chat/route.js`**, **`src/app/api/hub/settings/route.js`**
+- Triggers: `GET/POST /api/hub/snippets`, `GET/PUT/DELETE /api/hub/snippets/[id]`, **`POST /api/hub/chat`**, settings route as implemented
+- Responsibilities: Delegate to query layer or AI SDK; handle errors; return JSON/stream
 
-- Location: `src/app/blog/[slug]/page.jsx`
-- Triggers: Route `/blog/:slug`
-- Responsibilities: Fetch single post, render article layout
-
-**Validation Page:**
-
-- Location: `src/app/validation/page.jsx`
-- Triggers: Route `/validation`
-- Responsibilities: Render validation section with audit mock data
-
-**Expertise Page:**
-
-- Location: `src/app/expertise/page.jsx`
-- Triggers: Route `/expertise`
-- Responsibilities: Render expertise section standalone
+**Expertise, Validation, Contact Pages:**
+- Location: `src/app/expertise/page.jsx`, `src/app/validation/page.jsx`
+- Triggers: `/expertise`, `/validation` routes
+- Responsibilities: Render static or semi-dynamic content sections
 
 ## Error Handling
 
-**Strategy:** Graceful degradation - errors logged but don't crash the app
+**Strategy:** Fail gracefully; log to console; fall back to defaults
 
 **Patterns:**
-
-- **WordPress API timeouts:** 10-second fetch timeout with AbortController, fallback to empty array
-- **API 403 errors:** Automatic retry without `_embed` parameter for stricter CORS
-- **Hydration mismatches:** `suppressHydrationWarning` on body/root, session state checks in `useEffect`
-- **Missing refs:** useGSAP early return if refs not ready, re-runs on state change
-- **Animation failures:** Conditional rendering skips animations on reduced-motion preference
-- **Three.js loading:** Lazy-loaded HeroImages component with Suspense fallback
+- **API errors:** API routes catch and return 500 with error message; client logs error and falls back to empty state or retry
+- **Blob fetch failures:** `getSnippetContent()` catches blob fetch errors; returns empty string; component renders with empty preview
+- **WordPress fetch failures:** Blog page catches and logs; renders "No posts available" message
+- **GSAP cleanup:** ScrollTrigger instances have `onKill` handlers; unmount listeners prevent memory leaks
+- **Not Found:** Blog has explicit not-found handler at `src/app/blog/not-found.jsx`
 
 ## Cross-Cutting Concerns
 
 **Logging:**
-
-- Strategy: `console.error()` and `console.warn()` for API issues, animation problems
-- Pattern: Error messages include context (URL, status, message)
-- Used in: `src/lib/wordpress.js` (fetch errors), ScrollTrigger warnings, resize observer issues
+- Approach: `console.error()`, `console.log()` in catch blocks; no centralized logging library
+- Example: `src/app/api/hub/snippets/route.js` logs fetch errors and creation errors
 
 **Validation:**
-
-- Strategy: Response shape validation before rendering
-- Pattern: Check `Array.isArray()` before passing to map, null checks for nested data
-- Used in: WordPress post responses, featured image extraction, date formatting
+- Approach: Schema validation in API routes (check required fields); Drizzle schema defines column constraints (notNull, etc.)
+- Example: `src/app/api/hub/snippets/route.js` checks for `title`, `content`, `source_file` before creating
 
 **Authentication:**
+- Approach: No authentication layer implemented; all routes public
+- Note: AI SDK keys stored in `.env.local` (never exposed to client; used only in server routes/actions)
 
-- Strategy: Public API access only (WordPress REST API, no auth required)
-- Pattern: Headers include User-Agent and Referer for compatibility
-- Used in: `src/lib/wordpress.js`
-
-**Motion Preferences:**
-
-- Strategy: Respect `prefers-reduced-motion` media query
-- Pattern: `usePrefersReducedMotion()` hook reads user preference, sections check before animating
-- Used in: `PhilosophySection`, CSS animations with `@media (prefers-reduced-motion: reduce)`
-- Implementation: Character stagger disabled, square animations slowed, scroll tweens paused
-
-**Performance Optimization:**
-
-- Memoization: `GeometricBackground`, `Header`, UI components
-- Lazy loading: `HeroImages` with Suspense
-- Code splitting: Next.js automatic route-based splitting
-- Image optimization: Remotepatterns configured, formats (avif, webp), deviceSizes defined
-- Animation optimization: `force3D: true` on tweens, `will-change` conditional, `contain: strict` on animated elements
-- CSS containment: Layout/paint containment on background squares to prevent reflow
+**Styling & Theme:**
+- Approach: Tailwind CSS v4 with custom colors; CSS variables for fonts; no theme provider (not theme-aware)
+- Conventions: `bg-black`, `text-white`, `#00f0ff` accent for interactive elements; lowercase text via Tailwind utility
+- Font variables: `--font-syne` for branding, `--font-inter` for body; used via `font-[family-name:var(--font-syne)]`
 
 ---
 
-*Architecture analysis: 2026-03-21*
+## RESOLVED: Former nested `ulti-chat` tree
+
+**Historical issue (pre-2026-04):** `src/app/ulti-chat/` was a standalone Next.js project embedded in the tree — not routable as part of the main app.
+
+**Current state:** That path was **removed** from the App Router. Chat is **integrated** as **`/hub/chat`**. Any leftover AI Studio copy is **optional** under **`_reference/ulti-chat/`** (often gitignored) for local reference — **do not** import into `src/`.
+
+**Remaining discipline:** Server-only provider keys; hub streaming logic in **`src/app/api/hub/chat/route.js`**.
+
+---
+
+*Architecture analysis: 2026-03-23 · nested-app section reconciled 2026-04-01*

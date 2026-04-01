@@ -7,6 +7,7 @@
 @theme {
   --font-syne: var(--font-syne);
   --font-inter: var(--font-inter);
+  --font-sans: var(--font-inter);
 
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -92,9 +93,10 @@
     text-transform: lowercase;
   }
 
-  h1 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.02em; }
-  h2 { font-size: clamp(1.5rem, 4vw, 2.5rem); }
-  h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
+  /* :where() keeps specificity at 0 so @tailwindcss/typography (.prose :where(h2)…) wins inside blog body */
+  :where(h1) { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.02em; }
+  :where(h2) { font-size: clamp(1.5rem, 4vw, 2.5rem); }
+  :where(h3) { font-size: clamp(1.25rem, 3vw, 1.75rem); }
 
   p {
     font-family: var(--font-inter), sans-serif;
@@ -103,41 +105,44 @@
     letter-spacing: -0.01em;
   }
 
-  /* Add better spacing for blog content */
-  article p {
-    margin-bottom: 2rem;
-    font-size: 1.125rem;
-  }
-
-  article ul, article ol {
-    margin-bottom: 2rem;
-    padding-left: 1.5rem;
-  }
-
-  article li {
-    margin-bottom: 0.5rem;
-  }
+  /* Blog post HTML: all body typography + spacing lives under .blog-post-body (see [slug]/page.jsx).
+     Do NOT use bare `article p` — it stacks with @tailwindcss/typography and causes uneven posts. */
 
   .monospace, code {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   }
 
-  /* Prose styles for markdown rendering */
+  /* Prose shell color only — heading sizes/spacing come from Tailwind prose-* utilities on .blog-post-body */
   .prose {
     color: hsl(var(--foreground));
   }
 
-  .prose h1, .prose h2, .prose h3, .prose h4 {
-    font-family: var(--font-syne);
+  /* WordPress article body: Syne for headings, Inter for copy (matches [/slug] prose utilities) */
+  .blog-post-body :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-syne), sans-serif;
     font-weight: 700;
     text-transform: lowercase;
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
   }
 
-  .prose h1 { font-size: 2em; }
-  .prose h2 { font-size: 1.5em; }
-  .prose h3 { font-size: 1.25em; }
+  .blog-post-body {
+    font-family: var(--font-inter), sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  .blog-post-body :where(p, li, td, th, figcaption) {
+    font-family: var(--font-inter), sans-serif;
+  }
+
+  /* WordPress block wrappers often collapse margins; keep rhythm with post body only */
+  .blog-post-body :where(.wp-block-group, .wp-block-columns, .wp-block-media-text) {
+    margin-bottom: 1.5rem;
+  }
+
+  .blog-post-body :where(.wp-block-group:last-child, .wp-block-columns:last-child) {
+    margin-bottom: 0;
+  }
 
   .prose code {
     background: hsl(var(--muted));
@@ -159,12 +164,13 @@
     padding: 0;
   }
 
-  .prose ul, .prose ol {
+  /* List spacing for non-blog prose only — blog uses Tailwind prose-ul / prose-li utilities */
+  .prose:not(.blog-post-body) :where(ul, ol) {
     margin: 1rem 0;
     padding-left: 1.5rem;
   }
 
-  .prose li {
+  .prose:not(.blog-post-body) :where(li) {
     margin: 0.5rem 0;
   }
 
@@ -173,6 +179,46 @@
     padding-left: 1rem;
     margin: 1rem 0;
     color: hsl(var(--muted-foreground));
+  }
+
+  /* WordPress content normalization */
+  .prose figure {
+    margin: 2rem 0;
+  }
+
+  .prose figcaption {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .prose .wp-block-image img {
+    border-radius: 0.75rem;
+    border: 1px solid hsl(0 0% 18%);
+  }
+
+  .prose .wp-block-quote {
+    border-left: 2px solid hsl(0 0% 18%);
+    padding-left: 1.5rem;
+    font-style: italic;
+    color: hsl(0 0% 65%);
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .prose th, .prose td {
+    border: 1px solid hsl(0 0% 18%);
+    padding: 0.75rem 1rem;
+    text-align: left;
+  }
+
+  .prose th {
+    background: hsl(0 0% 6%);
+    font-weight: 600;
   }
 }
 

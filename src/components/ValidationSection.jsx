@@ -374,7 +374,7 @@ export function ValidationSection({ auditData }) {
           {/* Two-column Graphite layout */}
           <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6 md:gap-10 items-center">
             {/* LEFT: Card display — content swaps based on activeFeature */}
-            <Card className="relative h-[55vh] md:h-[60vh] overflow-hidden bg-card/40 backdrop-blur-sm">
+            <Card className="relative h-[55vh] md:h-[60vh] overflow-hidden bg-card/40 backdrop-blur-sm shadow-[0_0_60px_-10px_#00f0ff40,0_0_120px_-20px_#00f0ff20]">
               {features.map((feature, i) => (
                 <CardContent
                   key={feature.id}

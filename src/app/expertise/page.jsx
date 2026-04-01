@@ -1,4 +1,3 @@
-import { Header } from "@/components/Header";
 import { ExpertiseSection } from "@/components/ExpertiseSection";
 import { Footer } from "@/components/Footer";
 
@@ -18,8 +17,6 @@ export default function ExpertisePage() {
   return (
     // OPTIMIZATION: 'flex flex-col min-h-screen' ensures footer hits bottom on large screens
     <div className="flex flex-col min-h-screen relative w-full bg-transparent" suppressHydrationWarning>
-      <Header />
-
       <main className="flex-1 w-full pt-20" suppressHydrationWarning>
         {/* Reuse the ExpertiseSection. 
            Since this is a dedicated page, the section will take center stage.
