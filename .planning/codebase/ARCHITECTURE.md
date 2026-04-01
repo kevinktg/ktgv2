@@ -1,14 +1,14 @@
 # Architecture
 
-**Analysis Date:** 2026-03-23
+**Analysis Date:** 2026-03-23 · **2026-04:** `src/app/ulti-chat/` **removed** from the App Router. Hub AI chat is **`src/app/hub/chat/page.jsx`** + **`src/app/api/hub/chat/route.js`** inside the **same** Next.js 16 app.
 
 ## Pattern Overview
 
-**Overall:** Hybrid Next.js 16 monolith + nested standalone Next.js 15 microapp
+**Overall:** Next.js 16 App Router monolith (marketing + blog + hub tools + integrated hub chat)
 
 **Key Characteristics:**
 - Primary app: Next.js 16 App Router with React 19, server components + selective client boundaries
-- Nested app: `src/app/ulti-chat/` is a complete standalone Next.js 15 project (not integrated, not routable)
+- **Hub chat:** Integrated route **`/hub/chat`**; streaming API **`/api/hub/chat`** (Vercel AI SDK) — not a nested Next project
 - Data persistence: Vercel Postgres (Drizzle ORM) + Vercel Blob for large content
 - Animation layer: GSAP 3 + ScrollTrigger for advanced animations, Lenis for smooth scrolling
 - Styling: Tailwind CSS v4 + shadcn/ui primitives + custom brand components
@@ -143,15 +143,15 @@
 - Triggers: `/blog`, `/blog/[slug]` routes
 - Responsibilities: Fetch posts from WordPress; render grid or detail view; handle not-found case
 
-**Hub Index & Snippets:**
-- Location: `src/app/hub/page.jsx`, `src/app/hub/snippets/page.jsx`, `src/app/hub/snippets/[id]/page.jsx`
-- Triggers: `/hub`, `/hub/snippets`, `/hub/snippets/[id]` routes
-- Responsibilities: Redirect or render snippet browser; fetch from Postgres; render detail with markdown
+**Hub Index, Snippets & Chat:**
+- Location: `src/app/hub/page.jsx`, `src/app/hub/snippets/page.jsx`, `src/app/hub/snippets/[id]/page.jsx`, **`src/app/hub/chat/page.jsx`**
+- Triggers: `/hub`, `/hub/snippets`, `/hub/snippets/[id]`, **`/hub/chat`**
+- Responsibilities: Redirect or render snippet browser; fetch from Postgres; render detail with markdown; **chat UI** for hub
 
-**API: Snippet CRUD:**
-- Location: `src/app/api/hub/snippets/route.js`, `src/app/api/hub/snippets/[id]/route.js`
-- Triggers: `GET/POST /api/hub/snippets`, `GET/PUT/DELETE /api/hub/snippets/[id]`
-- Responsibilities: Delegate to query layer; handle errors; return JSON
+**API: Snippet CRUD + Chat + Settings:**
+- Location: `src/app/api/hub/snippets/route.js`, `src/app/api/hub/snippets/[id]/route.js`, **`src/app/api/hub/chat/route.js`**, **`src/app/api/hub/settings/route.js`**
+- Triggers: `GET/POST /api/hub/snippets`, `GET/PUT/DELETE /api/hub/snippets/[id]`, **`POST /api/hub/chat`**, settings route as implemented
+- Responsibilities: Delegate to query layer or AI SDK; handle errors; return JSON/stream
 
 **Expertise, Validation, Contact Pages:**
 - Location: `src/app/expertise/page.jsx`, `src/app/validation/page.jsx`
@@ -190,24 +190,14 @@
 
 ---
 
-## ARCHITECTURAL PROBLEM: Nested Next.js Project
+## RESOLVED: Former nested `ulti-chat` tree
 
-**Issue:** `src/app/ulti-chat/` is a complete, standalone Next.js 15 project embedded inside the main Next.js 16 app.
+**Historical issue (pre-2026-04):** `src/app/ulti-chat/` was a standalone Next.js project embedded in the tree — not routable as part of the main app.
 
-**Consequences:**
-- **Not routable:** ulti-chat has its own `next.config.ts`, `tsconfig.json`, `package.json`, and `app/` directory. It is **not** a child route of the main app.
-- **Separate build:** ulti-chat requires its own `npm install` and `npm run build` — it doesn't inherit dependencies from root `package.json`
-- **No import access:** You **cannot** import ulti-chat components into the main site. There is no shared context, no styling inheritance, no database access.
-- **Type system conflict:** ulti-chat uses TSX (TypeScript) while main app uses JSX (JavaScript); no type safety across boundary
-- **Unresolved intent:** It's unclear whether this is a temporary staging area, a future dashboard, or an abandoned POC
+**Current state:** That path was **removed** from the App Router. Chat is **integrated** as **`/hub/chat`**. Any leftover AI Studio copy is **optional** under **`_reference/ulti-chat/`** (often gitignored) for local reference — **do not** import into `src/`.
 
-**Current state:** It exists but is completely isolated. Even if accessed at its own entry point, it would be a separate runtime entirely.
-
-**Recommendation for future phases:**
-1. **Option A (Isolation):** Move to `/public/ulti-chat/` as a static deploy or iframe embed
-2. **Option B (Integration):** Migrate to proper Next.js 16 App Router nested route structure; use same styling system and components
-3. **Option C (Deletion):** Remove if no longer needed; preserve in git history
+**Remaining discipline:** Server-only provider keys; hub streaming logic in **`src/app/api/hub/chat/route.js`**.
 
 ---
 
-*Architecture analysis: 2026-03-23*
+*Architecture analysis: 2026-03-23 · nested-app section reconciled 2026-04-01*

@@ -2,6 +2,8 @@
 
 ## Current milestone: v1.1 — Hub production evidence, polish, merge
 
+**Planning scope:** **Marketing** = public site + blog + shell QA (see `.planning/phases/01-marketing-shell/`). **Hub chat** = `/hub/chat` + `/api/hub/*` on the integration branch until merge. **Post-merge** = single app on `main`, hub routes part of normal deploy; no `src/app/ulti-chat/`. Details: `.planning/STATE.md` → *Planning scope*.
+
 **Goal:** Close hub chat **Phase 6** with recorded smoke on **Vercel** (you control secrets in the dashboard; this repo cannot verify them), deliver agreed **Phase 7** UI polish or explicitly defer items, merge **`feature/ulti-chat-integration`** when green, then resume **public-site** roadmap work (e.g. 01-02 QA, WordPress/SEO).
 
 **Target outcomes:**
@@ -9,7 +11,7 @@
 - [ ] Phase 6 checklist recorded (preview/prod): send message, stream, model switch, personas — match `.planning/STATE.md`
 - [ ] Phase 7 scoped: e.g. status dots, Iosevka, preset UX — **subset acceptable**; mark rest deferred in `STATE.md`
 - [ ] Branch merged to `main` with passing deploy
-- [ ] `AGENTS.md` / planning aligned post-merge (markdown)
+- [x] `AGENTS.md` / planning aligned with hub routes (markdown; 2026-04-01)
 
 **Not implied by “chat works once”:** Entire hub UI “finished” — large `page.jsx`, placeholder nav links, optional skills/MCP still exist; “done” is a product call after Phase 7/deferrals.
 
@@ -36,9 +38,9 @@ Visitors reliably get a fast, credible brand experience and can read blog conten
 ### Active
 
 - [ ] Resolve open codebase concerns in priority order (dependency cleanup, experimental `ktg*` trees, WordPress fetch timeouts, sitemap pagination beyond 100 posts) per `.planning/codebase/CONCERNS.md`
-- [x] WordPress `no-store` vs `revalidate` — documented under **Constraints** (2026-04-01)
-- [x] `openmemory.md` — seeded as living index (2026-04-01); expand when hub/marketing stabilizes on `main`
-- [ ] Align `AGENTS.md` tasks with hub chat (`/hub/chat`) and `.planning/STATE.md` (markdown-only; see pending todo `2026-04-01-planning-md-only-and-doc-backlog.md`)
+- [x] WordPress `no-store` vs `revalidate` — documented under **Constraints**; policy is explicit (2026-04-01 reconciliation)
+- [x] `openmemory.md` — living index + planning SSOT note (2026-04-01 reconciliation)
+- [x] `AGENTS.md` / `CLAUDE.md` — aligned with `/hub/chat` + `_reference/ulti-chat/` (2026-04-01 reconciliation)
 
 ### Out of Scope
 
@@ -78,4 +80,4 @@ Any tension with `AGENTS.md` wording is **resolved here**: both patterns are int
 | npm + package-lock as primary install | CI uses `npm ci` | — Pending |
 
 ---
-*Last updated: 2026-04-01 — Milestone v1.1 started (`$gsd-new-milestone` brownfield); see `.planning/MILESTONES.md`*
+*Last updated: 2026-04-01 — Planning docs reconciled with codebase (`/hub/chat`, no `src/app/ulti-chat/`); see `.planning/MILESTONES.md`*

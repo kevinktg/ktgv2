@@ -1,6 +1,6 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-03-23
+**Analysis Date:** 2026-03-23 · **Route reality (2026-04-01):** Integrated hub chat lives at **`src/app/hub/chat/`** with APIs under **`src/app/api/hub/`**. The old **`src/app/ulti-chat/`** tree is **not** in the App Router; a local mirror may exist only as **`_reference/ulti-chat/`** (gitignored).
 
 ## Directory Layout
 
@@ -14,6 +14,10 @@ ktgv2/
 │   │   ├── globals.css               # Tailwind directives + CSS variables
 │   │   ├── api/
 │   │   │   └── hub/
+│   │   │       ├── chat/
+│   │   │       │   └── route.js      # POST streaming chat (Vercel AI SDK)
+│   │   │       ├── settings/
+│   │   │       │   └── route.js      # Hub settings API
 │   │   │       └── snippets/
 │   │   │           ├── route.js      # GET/POST snippets
 │   │   │           └── [id]/
@@ -29,34 +33,18 @@ ktgv2/
 │   │   ├── hub/
 │   │   │   ├── page.jsx              # Hub index (redirects to /hub/snippets)
 │   │   │   ├── README.md             # Hub documentation
+│   │   │   ├── chat/
+│   │   │   │   └── page.jsx         # AI chat UI (/hub/chat)
 │   │   │   └── snippets/
 │   │   │       ├── page.jsx          # Snippet browser (grid view)
 │   │   │       └── [id]/
 │   │   │           └── page.jsx      # Snippet detail (markdown view)
 │   │   ├── validation/
 │   │   │   └── page.jsx              # Credentials/validation section
-│   │   ├── components/               # Page-scoped components (UI primitives)
+│   │   ├── components/               # (If present) page-scoped UI — most UI is under src/components/
 │   │   │   └── ui/
-│   │   │       ├── button.tsx
-│   │   │       ├── input.tsx
-│   │   │       ├── switch.tsx
-│   │   │       └── (shadcn primitives)
-│   │   └── ulti-chat/                # ⚠️ ISOLATED: Standalone Next.js 15 project
-│   │       ├── app/
-│   │       │   ├── layout.tsx
-│   │       │   ├── page.tsx          # Gemini AI chat interface
-│   │       │   └── globals.css
-│   │       ├── hooks/
-│   │       │   └── use-mobile.ts
-│   │       ├── lib/
-│   │       │   └── utils.ts
-│   │       ├── package.json          # Separate dependency manifest
-│   │       ├── tsconfig.json         # TypeScript config (ulti-chat only)
-│   │       ├── next.config.ts
-│   │       ├── metadata.json
-│   │       ├── components.json
-│   │       ├── .eslintrc.json
-│   │       └── (has own build system)
+│   │   │       └── …
+│   │   └── (no ulti-chat under app/) # Historical: was nested Next; moved to _reference/ or removed
 │   ├── components/                   # Global, reusable components
 │   │   ├── ClientLayout.jsx          # Lenis + GlobalCursor wrapper
 │   │   ├── GeometricBackground.jsx   # Fixed bg with animated gradient
@@ -164,9 +152,11 @@ ktgv2/
 - **template.jsx**: Page transition effects (wraps all route changes)
 - **globals.css**: Tailwind directives, CSS variable definitions (`--font-syne`, `--font-inter`, color tokens)
 - **api/hub/snippets/**: CRUD endpoints for snippet management (backed by Drizzle + Blob)
+- **api/hub/chat/**: Streaming chat (Vercel AI SDK)
+- **api/hub/settings/**: Hub settings endpoint
 - **blog/**: Blog pages fetching from WordPress REST API
-- **expertise/, validation/, hub/**: Static/semi-dynamic pages
-- **ulti-chat/**: ⚠️ Isolated Next.js 15 project (do not import from main app)
+- **expertise/, validation/, hub/**: Static/semi-dynamic pages; **hub/chat** = production chat UI
+- **Legacy ulti-chat:** not under `src/app/`; optional **`_reference/ulti-chat/`** only — do not import into `src/`
 
 ### `src/components/` — Global Components
 

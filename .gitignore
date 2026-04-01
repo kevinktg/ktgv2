@@ -33,3 +33,8 @@ Thumbs.db
 
 # reference (temp parking for ulti-chat source)
 _reference/
+
+# OpenMemory - IDE/Assistant specific rules
+.cursor\rules\openmemory.mdc
+CLAUDE.md
+AGENTS.md

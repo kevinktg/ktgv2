@@ -1,10 +1,12 @@
 # Progress Log - Ulti-Chat Integration
 
+> **2026-04:** Production chat is **`/hub/chat`** + **`/api/hub/chat`**. Entries below from **2026-03-23** describe work **before** the nested app was moved to **`_reference/ulti-chat/`**.
+
 ## Session: 2026-03-23
 
 ### 22:00 - Session Start
 - Kevin showed ulti-chat: AI Studio app (Gemini chat with personas, prompt injects, macros)
-- Located at `src/app/ulti-chat/` — standalone Next.js 15 app nested in ktgv2
+- At session start the nested app was still under `src/app/ulti-chat/` (later moved to `_reference/ulti-chat/`)
 - Goal: integrate as tool hub route, convert to shadcn, fix security issues
 
 ### 22:15 - Codebase Mapping Complete

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +14,18 @@ export function ContactCTA() {
         <h2 className="font-syne text-4xl md:text-5xl font-bold lowercase mb-4 text-white">
           get in touch
         </h2>
-        <p className="text-white/40 mb-12 text-sm md:text-base">
+        <p className="text-white/40 mb-4 text-sm md:text-base">
           have a project, question, or just want to talk AI?
+        </p>
+        <p className="text-white/35 mb-12 text-sm md:text-base lowercase">
+          want to try the tool surface first?{" "}
+          <Link
+            href="/hub/chat"
+            className="text-[#00f0ff]/90 hover:text-[#00f0ff] underline-offset-4 hover:underline"
+          >
+            open hub chat
+          </Link>
+          .
         </p>
 
         <Separator className="mb-12 bg-white/10" />

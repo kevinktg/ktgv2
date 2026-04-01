@@ -1,9 +1,11 @@
 # Findings - Ulti-Chat Integration into ktgv2
 
+> **2026-04:** Discoveries below describe the **pre-integration** tree. That app was **moved** to **`_reference/ulti-chat/`**; production chat is **`/hub/chat`**. Treat paths like `src/app/ulti-chat/` as **historical** in this document.
+
 ## Session: 2026-03-23
 
 ### Discovery 1: Ulti-Chat Structure
-- Full standalone Next.js 15 app at `src/app/ulti-chat/`
+- Full standalone Next.js 15 app at `src/app/ulti-chat/` (since moved to `_reference/`)
 - Own package.json, next.config.ts, tsconfig.json, postcss.config.mjs
 - Single monolithic `app/page.tsx` (~840 lines) — entire UI in one file
 - `app/layout.tsx` — minimal, Syne + Inter fonts (identical vars to ktgv2)

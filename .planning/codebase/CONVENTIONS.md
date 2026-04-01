@@ -1,15 +1,16 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-03-23
+**Analysis Date:** 2026-03-23 · **2026-04:** **`src/app/ulti-chat/`** is **not** in the App Router. **Production** code is one architecture: **Main App** + integrated **`src/app/hub/chat/page.jsx`** (**JSX**). A gitignored **`_reference/ulti-chat/`** folder may still hold **TypeScript** AI Studio patterns for historical comparison — do not treat it as a second routable product.
 
 ## Overview
 
-This codebase contains two distinct app architectures with different conventions:
+**Primary (all shipped routes including `/hub/chat`):**
 
-1. **Main App** (`src/app/` + `src/components/`): Next.js 16, React 19, **JSX** (not TypeScript), GSAP animations, Tailwind v4
-2. **ulti-chat** (`src/app/ulti-chat/`): Next.js 15, **TypeScript (TSX)**, Framer Motion alternative, isolated Next.js app within the main repo
+1. **Main App** (`src/app/` + `src/components/`): Next.js 16, React 19, **JSX**, GSAP (marketing), Tailwind v4, Vercel AI SDK on the server for hub chat
 
-These have **fundamentally different conventions** — always check which context you're writing for.
+**Historical / reference only:**
+
+2. **Legacy ulti-chat** (`_reference/ulti-chat/` if present): was Next 15 + **TSX** + different animation stack — useful for diffing old prompts/UI **only**; never import into `src/`
 
 ---
 
@@ -43,7 +44,7 @@ These have **fundamentally different conventions** — always check which contex
 - Format: camelCase `.js`
 - Examples: `src/lib/db/schema.js`, `src/lib/db/client.js`
 
-### ulti-chat (TypeScript)
+### Legacy ulti-chat reference (TypeScript) — `_reference/` only
 
 **Components:**
 - Format: PascalCase `.tsx`
@@ -593,24 +594,16 @@ export const GeometricBackground = memo(function GeometricBackground({ fixed = f
 
 ---
 
-## Differences Between Main App & ulti-chat
+## Historical: main app vs legacy `_reference/ulti-chat`
 
-| Aspect | Main App | ulti-chat |
-|--------|----------|-----------|
-| **Language** | JSX (JavaScript) | TSX (TypeScript) |
-| **Next.js Version** | 16 | 15 |
-| **Animation** | GSAP + ScrollTrigger | Framer Motion (motion pkg) |
-| **Component Files** | Separate `.jsx` files | Inline in `page.tsx` |
-| **Types** | No type checking | Full TypeScript with `strict: true` |
-| **ESLint Config** | Extends "next" | Extends "next" |
-| **Styling** | Tailwind v4 | Tailwind v4 |
-| **Path Alias Root** | `./src/*` | `./*` (ulti-chat root) |
-| **Testing** | None configured | None configured |
+| Aspect | Main App (shipped) | `_reference/ulti-chat` (optional local copy) |
+|--------|-------------------|-----------------------------------------------|
+| **Language** | JSX | TSX (if reference kept) |
+| **Next.js** | 16 App Router | Was 15 nested tree — **not** in `src/app/` anymore |
+| **Chat route** | `/hub/chat` | N/A (reference only) |
 
-**Never mix patterns between apps.** Check the file path first:
-- Main app: `src/components/`, `src/app/` (non-ulti-chat)
-- ulti-chat: `src/app/ulti-chat/`
+**Rule:** All new work lives under **`src/`** Main App conventions. Do not copy TSX patterns from reference into production paths without an explicit porting task.
 
 ---
 
-*Convention analysis: 2026-03-23*
+*Convention analysis: 2026-03-23 · reconciled 2026-04-01*

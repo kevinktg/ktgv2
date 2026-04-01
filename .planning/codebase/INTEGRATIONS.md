@@ -1,17 +1,18 @@
 # External Integrations
 
-**Analysis Date:** 2026-03-23
+**Analysis Date:** 2026-03-23 · **2026-04 update:** Production chat uses **Vercel AI SDK** on **`/api/hub/chat`** (`src/app/api/hub/chat/route.js`) with multi-provider support (e.g. Google, Anthropic, OpenAI via **`@ai-sdk/*`**). The old **ulti-chat** path under `src/app/ulti-chat/` is **removed**; a local AI Studio copy may exist only under **`_reference/ulti-chat/`** (not deployed with the main app).
 
 ## APIs & External Services
 
 **AI Models:**
-- **Google Gemini API** — ulti-chat sub-app (`src/app/ulti-chat/app/page.tsx`)
-  - SDK/Client: `@google/genai` (1.17.0)
-  - Auth: `GEMINI_API_KEY` environment variable (injected by AI Studio at runtime)
-  - Usage: Chat interface with personas, prompt injection, skill system
-  - Endpoint: Google Gemini REST API
+- **Hub chat (`/hub/chat`)** — `POST /api/hub/chat` (streaming)
+  - SDK: `ai` + `@ai-sdk/google`, `@ai-sdk/anthropic`, `@ai-sdk/openai` (see root `package.json`)
+  - Auth: **Server-side** env vars on Vercel / `.env.local` (e.g. provider keys — no `NEXT_PUBLIC_*` LLM keys in `src/`)
+  - Usage: Multi-model chat UI in `src/app/hub/chat/page.jsx`
 
-- **OpenAI API** — main app (imported but not actively used in current code)
+- **`@google/genai`** — still a root dependency; used where referenced (not the primary hub chat path; hub uses AI SDK)
+
+- **OpenAI API** — main app (available via AI SDK)
   - SDK/Client: `@ai-sdk/openai` (3.0.12) via Vercel AI SDK
   - Library: `ai` (6.0.5) for streaming and tool calling
   - Auth: Expected in `OPENAI_API_KEY` environment variable (not configured)
@@ -90,9 +91,7 @@
 
 **Auth Provider:**
 - Custom/None for main app — No auth system implemented
-- Google OAuth implied for AI Studio (ulti-chat) — Inherited from AI Studio platform
-  - `APP_URL` used for OAuth callback setup
-  - Details handled by Cloud Run environment
+- **Historical:** An AI Studio / Cloud Run OAuth flow may have applied to a **standalone** ulti-chat deploy — not to the integrated **`/hub/chat`** surface on Vercel
 
 ## Monitoring & Observability
 
@@ -120,12 +119,9 @@
   - Start command: `next start`
   - Region: `iad1` (US East Coast, per `vercel.json`)
   - npm flag: `--legacy-peer-deps` (peer dependency compatibility)
+  - Includes **hub chat** and **hub APIs** in the same deployment
 
-- **ulti-chat sub-app** — Google Cloud Run
-  - Standalone Next.js deployment with `output: 'standalone'`
-  - Built via AI Studio platform (source-managed interface)
-  - Environment: Custom `APP_URL` injected at runtime
-  - HMR disabled during agent edits via `DISABLE_HMR=true`
+- **Legacy ulti-chat (standalone)** — If still operated outside this repo, would be a **separate** deploy (e.g. Cloud Run / AI Studio); **not** part of `src/app/` App Router
 
 **CI Pipeline:**
 - Not explicitly configured (no GitHub Actions, GitLab CI, etc.)
@@ -137,14 +133,11 @@
 - `POSTGRES_URL` — Vercel Postgres connection string (format: `postgresql://...`)
 - `BLOB_READ_WRITE_TOKEN` — Vercel Blob API token
 - `NEXT_PUBLIC_WORDPRESS_URL` (optional) — WordPress API endpoint (defaults to Hostinger instance)
-
-**Required env vars (ulti-chat):**
-- `GEMINI_API_KEY` — Google Gemini API authentication
-- `APP_URL` — Cloud Run service base URL (for OAuth callbacks)
+- **Hub chat:** Provider keys as required by `src/app/api/hub/chat/route.js` (e.g. Google / Anthropic / OpenAI — **server-only**)
 
 **Secrets location:**
-- Main app: Vercel Environment Variables (encrypted in Vercel dashboard)
-- ulti-chat: AI Studio Secrets panel (Google Cloud Secret Manager)
+- Main app (including hub): **Vercel Environment Variables** (encrypted in Vercel dashboard)
+- **`_reference/ulti-chat/`** (if present locally): may document its own env pattern — **not** production for ktg.one App Router
 
 ## Webhooks & Callbacks
 

@@ -6,6 +6,16 @@ Deliver a production-ready KTG One site in three coarse milestones: first a cons
 
 A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub chat at `/hub/chat` — this is separate from the v1 marketing milestone but tracked here.
 
+**Two tracks until merge:** The table under [Progress](#progress) is **marketing phases 1–3 only**. Hub chat progress lives in the **Hub Chat Feature Branch** table below and in `.planning/STATE.md`. After this branch merges to `main`, fold hub work into **Phases 4+** as a single ordered roadmap.
+
+## Planning discipline
+
+- Reconciliation / alignment work defaults to **markdown and `.planning/` only** unless you explicitly request application code under `src/`.
+
+## Roadmap evolution
+
+- **2026-04-01:** Hub chat lives at `/hub/chat` (`src/app/hub/chat`, `src/app/api/hub/chat/route.js`). Legacy AI Studio app was **moved** to `_reference/ulti-chat/` (gitignored), not deleted. After merge to `main`, the hub table below folds into **Phases 4+** (one sequence of plans).
+
 ## Phases
 
 **Phase numbering:** Integer phases (1, 2, 3) for this milestone. Decimal phases reserved for urgent inserts via `/gsd:insert-phase`.
@@ -97,6 +107,8 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Blocked on:** API keys in `.env.local`. Run `vercel env pull .env.local`.
 
+**Post-merge numbering (target):** Hub verification + production env → **Phase 4**; hub polish (deferred Phase 7 items) → **Phase 5** or sub-plans under Phase 4; then resume marketing **Phases 1–3** open plans as needed (or run in parallel with Phase 4 if marketing ships first).
+
 ---
 
 ## Progress
@@ -112,4 +124,4 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 ---
 *Roadmap created: 2026-03-21 — granularity: coarse (3 phases)*
 *Milestone: current v1 planning cycle*
-*Last updated: 2026-03-24 — Hub chat feature branch added; STATE.md updated with current position*
+*Last updated: 2026-04-01 — Roadmapper: two-track note, post-merge Phase 4+, planning discipline; prior 2026-03-24 hub table*

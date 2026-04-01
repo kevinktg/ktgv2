@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { useChat } from '@ai-sdk/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -130,6 +131,14 @@ const NAV_LINKS = [
   { id: 'content-hub', label: 'content hub', icon: PenTool, href: '#' },
 ];
 
+/** Cyan edge glow / hover — parity with DockNav */
+const CHAT_ROW_GLOW =
+  "transition-all duration-300 border border-transparent hover:border-[rgba(0,240,255,0.28)] hover:bg-[rgba(0,240,255,0.06)] hover:text-[#00f0ff] hover:shadow-[0_0_14px_rgba(0,240,255,0.22),0_0_28px_rgba(0,240,255,0.08)]";
+const CHAT_ICON_BTN =
+  "border border-zinc-800 transition-all duration-300 hover:border-[rgba(0,240,255,0.4)] hover:text-[#00f0ff] hover:bg-[rgba(0,240,255,0.08)] hover:shadow-[0_0_20px_rgba(0,240,255,0.3),0_0_40px_rgba(0,240,255,0.12)]";
+const CHAT_ASIDE_EDGE =
+  "transition-[border-color,box-shadow] duration-300 hover:border-[rgba(0,240,255,0.22)] hover:shadow-[inset_-4px_0_28px_-6px_rgba(0,240,255,0.14)]";
+
 // --- Icon Picker ---
 const IconPicker = ({ selected, onSelect }) => {
   const [search, setSearch] = useState('');
@@ -137,7 +146,7 @@ const IconPicker = ({ selected, onSelect }) => {
     n.toLowerCase().includes(search.toLowerCase())
   );
   return (
-    <div className="flex flex-col gap-2 border border-zinc-800 p-2 bg-black">
+    <div className="flex flex-col gap-2 border border-zinc-800 bg-black p-2 transition-[border-color,box-shadow] duration-300 hover:border-[rgba(0,240,255,0.2)] hover:shadow-[0_0_20px_rgba(0,240,255,0.1)]">
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
         <input
@@ -278,7 +287,14 @@ export default function HubChat() {
     return sys;
   };
 
-  const { messages, isLoading, append: appendA } = useChat({
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    append: appendA,
+  } = useChat({
     api: '/api/hub/chat',
     id: 'pane-a',
     body: {
@@ -323,7 +339,7 @@ export default function HubChat() {
     prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
   );
 
-  const fireMacro = macro => append({ role: 'user', content: macro.prompt });
+  const fireMacro = macro => appendA({ role: 'user', content: macro.prompt });
 
   const handleSaveMacro = () => {
     if (!newMacro.name.trim() || !newMacro.prompt.trim()) return;
@@ -345,10 +361,23 @@ export default function HubChat() {
     <div className="flex min-h-[100dvh] w-full bg-black text-zinc-50 overflow-hidden font-[family-name:var(--font-mono)] selection:bg-[#00f0ff] selection:text-black">
 
       {/* LEFT SIDEBAR */}
-      <aside className="w-16 hover:w-56 group border-r border-zinc-800 bg-black flex flex-col items-start py-4 z-20 transition-all duration-300 overflow-hidden absolute h-full md:relative shrink-0">
+      <aside
+        className={cn(
+          "group absolute z-20 flex h-full w-16 shrink-0 flex-col items-start overflow-hidden border-r border-zinc-800 bg-black py-4 transition-all duration-300 hover:w-56 md:relative",
+          CHAT_ASIDE_EDGE,
+        )}
+      >
         <div className="px-4 mb-6 flex items-center gap-3 shrink-0 w-full">
-          <div className="h-8 w-8 bg-[#00f0ff] flex items-center justify-center shrink-0">
-            <BrainCircuit className="h-5 w-5 text-black" />
+          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center transition-[filter,transform] duration-300 group-hover:drop-shadow-[0_0_12px_rgba(0,240,255,0.45)] group-hover:scale-[1.02]">
+            <Image
+              src="/assets/ktg.svg"
+              alt=".ktg"
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain"
+              unoptimized
+              priority
+            />
           </div>
           <span className="font-[family-name:var(--font-syne)] font-bold lowercase text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">.ktg hub</span>
         </div>
@@ -358,8 +387,10 @@ export default function HubChat() {
               key={link.id}
               href={link.href}
               className={cn(
-                "flex items-center gap-3 p-2.5 w-full border border-transparent transition-colors text-zinc-500 hover:text-white hover:bg-zinc-900",
-                link.id === 'chat' && "bg-zinc-900 border-zinc-800 text-white"
+                "flex w-full items-center gap-3 border border-transparent p-2.5 text-zinc-500",
+                CHAT_ROW_GLOW,
+                link.id === 'chat' &&
+                  "border-[rgba(0,240,255,0.35)] bg-[rgba(0,240,255,0.1)] text-[#00f0ff] shadow-[0_0_16px_rgba(0,240,255,0.22),0_0_32px_rgba(0,240,255,0.08)]",
               )}
             >
               <link.icon className="h-5 w-5 shrink-0" />
@@ -376,8 +407,10 @@ export default function HubChat() {
                 onClick={() => toggleSkill(skill.id)}
                 title={skill.name}
                 className={cn(
-                  "flex items-center gap-3 p-2.5 w-full border border-transparent transition-colors text-zinc-500 hover:text-white hover:bg-zinc-900",
-                  isActive && "text-[#00f0ff] bg-[#00f0ff]/10 border-l-2 border-l-[#00f0ff]"
+                  "flex w-full items-center gap-3 border border-transparent p-2.5 text-zinc-500",
+                  CHAT_ROW_GLOW,
+                  isActive &&
+                    "border-l-2 border-l-[#00f0ff] border-[rgba(0,240,255,0.25)] bg-[rgba(0,240,255,0.1)] text-[#00f0ff] shadow-[0_0_14px_rgba(0,240,255,0.2)]",
                 )}
               >
                 <skill.icon className="h-5 w-5 shrink-0" />
@@ -392,7 +425,7 @@ export default function HubChat() {
       <div className="flex flex-col flex-1 min-w-0 ml-16 md:ml-0">
 
         {/* HEADER */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-black shrink-0">
+        <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-black px-4 py-3 shadow-[0_1px_0_rgba(0,240,255,0.06),0_8px_32px_-12px_rgba(0,240,255,0.05)]">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <div className={cn("h-7 w-7 flex items-center justify-center shrink-0", selectedPersona.bg)}>
@@ -402,7 +435,7 @@ export default function HubChat() {
                 />
               </div>
               <Select value={selectedPersonaId} onValueChange={setSelectedPersonaId}>
-                <SelectTrigger className="h-7 border-zinc-800 bg-transparent text-xs font-[family-name:var(--font-syne)] font-bold lowercase text-white focus:ring-[#00f0ff] w-auto gap-1 pr-2 rounded-none">
+                <SelectTrigger className="h-7 w-auto gap-1 rounded-none border-zinc-800 bg-transparent pr-2 text-xs font-bold lowercase text-white font-[family-name:var(--font-syne)] transition-[border-color,box-shadow] duration-300 hover:border-[rgba(0,240,255,0.35)] hover:shadow-[0_0_14px_rgba(0,240,255,0.15)] focus:ring-[#00f0ff]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-950 border-zinc-800 rounded-none">
@@ -429,7 +462,7 @@ export default function HubChat() {
             </div>
             <div className="w-px h-4 bg-zinc-800" />
             <Select value={selectedModelId} onValueChange={setSelectedModelId}>
-              <SelectTrigger className="h-7 border-zinc-800 bg-transparent text-xs font-[family-name:var(--font-syne)] lowercase text-zinc-400 focus:ring-[#00f0ff] w-auto gap-1 pr-2 rounded-none">
+              <SelectTrigger className="h-7 w-auto gap-1 rounded-none border-zinc-800 bg-transparent pr-2 text-xs lowercase text-zinc-400 font-[family-name:var(--font-syne)] transition-[border-color,box-shadow] duration-300 hover:border-[rgba(0,240,255,0.35)] hover:text-zinc-200 hover:shadow-[0_0_14px_rgba(0,240,255,0.15)] focus:ring-[#00f0ff]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-zinc-950 border-zinc-800 rounded-none">
@@ -463,7 +496,7 @@ export default function HubChat() {
                 />
                 <button
                   onClick={savePreset}
-                  className="h-7 px-2 bg-[#00f0ff] text-black text-xs font-[family-name:var(--font-syne)] font-bold lowercase hover:bg-[#00f0ff]/80 transition-colors"
+                  className="h-7 border border-[rgba(0,240,255,0.5)] bg-[#00f0ff] px-2 text-xs font-bold lowercase text-black font-[family-name:var(--font-syne)] transition-all duration-300 hover:bg-[#00f0ff]/85 hover:shadow-[0_0_20px_rgba(0,240,255,0.55),0_0_40px_rgba(0,240,255,0.2)]"
                 >
                   save
                 </button>
@@ -478,7 +511,7 @@ export default function HubChat() {
               <>
                 {presets.length > 0 && (
                   <Select onValueChange={applyPreset}>
-                    <SelectTrigger className="h-7 border-zinc-800 bg-transparent text-xs font-[family-name:var(--font-syne)] lowercase text-zinc-500 focus:ring-[#00f0ff] w-auto gap-1 pr-2 rounded-none">
+                    <SelectTrigger className="h-7 w-auto gap-1 rounded-none border-zinc-800 bg-transparent pr-2 text-xs lowercase text-zinc-500 font-[family-name:var(--font-syne)] transition-[border-color,box-shadow] duration-300 hover:border-[rgba(0,240,255,0.3)] hover:shadow-[0_0_12px_rgba(0,240,255,0.12)] focus:ring-[#00f0ff]">
                       <SelectValue placeholder="presets" />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-950 border-zinc-800 rounded-none">
@@ -500,7 +533,7 @@ export default function HubChat() {
                 )}
                 <button
                   onClick={() => setIsSavingPreset(true)}
-                  className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-[#00f0ff] hover:border-[#00f0ff] hover:bg-[#00f0ff]/5 transition-colors"
+                  className={cn("p-1.5 text-zinc-500", CHAT_ICON_BTN)}
                   title="save preset"
                 >
                   <Bookmark className="h-4 w-4" />
@@ -513,10 +546,10 @@ export default function HubChat() {
             <button
               onClick={() => setIsRightSidebarOpen(v => !v)}
               className={cn(
-                "p-1.5 border transition-colors",
+                "border p-1.5 text-zinc-500 transition-all duration-300",
                 isRightSidebarOpen
-                  ? "border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/10"
-                  : "border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900"
+                  ? "border-[#00f0ff] bg-[rgba(0,240,255,0.12)] text-[#00f0ff] shadow-[0_0_18px_rgba(0,240,255,0.35),0_0_36px_rgba(0,240,255,0.15)]"
+                  : CHAT_ICON_BTN,
               )}
               title="macros"
             >
@@ -524,7 +557,7 @@ export default function HubChat() {
             </button>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-white hover:bg-zinc-900 transition-colors"
+              className={cn("p-1.5 text-zinc-500", CHAT_ICON_BTN)}
               title="settings"
             >
               <Settings className="h-4 w-4" />
@@ -545,10 +578,10 @@ export default function HubChat() {
                       </div>
                     )}
                     <div className={cn(
-                      "max-w-[80%] px-4 py-3 text-sm leading-relaxed",
+                      "max-w-[80%] px-4 py-3 text-sm leading-relaxed transition-[border-color,box-shadow] duration-300",
                       msg.role === 'user'
-                        ? "bg-zinc-900 border border-zinc-800 text-zinc-100 shadow-[0_0_12px_rgba(0,240,255,0.04)]"
-                        : "bg-zinc-950 border border-zinc-800/50 text-zinc-200 shadow-[0_0_12px_rgba(0,240,255,0.04)]"
+                        ? "border border-zinc-800 bg-zinc-900 text-zinc-100 shadow-[0_0_16px_rgba(0,240,255,0.14),0_0_32px_rgba(0,240,255,0.06)] hover:border-[rgba(0,240,255,0.25)] hover:shadow-[0_0_22px_rgba(0,240,255,0.22),0_0_44px_rgba(0,240,255,0.1)]"
+                        : "border border-zinc-800/50 bg-zinc-950 text-zinc-200 shadow-[0_0_14px_rgba(0,240,255,0.08)] hover:border-[rgba(0,240,255,0.18)] hover:shadow-[0_0_20px_rgba(0,240,255,0.12)]",
                     )}>
                       {msg.role === 'assistant' ? (
                         <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-800 prose-code:text-[#00f0ff] prose-code:bg-transparent prose-code:before:content-none prose-code:after:content-none">
@@ -588,7 +621,7 @@ export default function HubChat() {
             {/* INPUT ZONE — floating with glow */}
             <div className="shrink-0 px-4 pb-6 pt-2 absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black via-black/95 to-transparent pointer-events-none">
               <form onSubmit={handleSubmit} className="max-w-3xl mx-auto pointer-events-auto">
-                <div className="border border-[#00f0ff]/20 bg-zinc-950/95 backdrop-blur-sm shadow-[0_0_20px_rgba(0,240,255,0.08),0_-8px_32px_rgba(0,0,0,0.8)]">
+                <div className="border border-[#00f0ff]/20 bg-zinc-950/95 backdrop-blur-sm shadow-[0_0_20px_rgba(0,240,255,0.08),0_-8px_32px_rgba(0,0,0,0.8)] transition-[border-color,box-shadow] duration-300 focus-within:border-[rgba(0,240,255,0.45)] focus-within:shadow-[0_0_32px_rgba(0,240,255,0.22),0_0_56px_rgba(0,240,255,0.12),0_-8px_32px_rgba(0,0,0,0.8)]">
 
                   {/* TOP: inject dots */}
                   <div className="px-3 pt-2.5 flex items-center gap-1.5 border-b border-zinc-900">
@@ -601,8 +634,10 @@ export default function HubChat() {
                           onClick={() => toggleInject(inject.id)}
                           title={inject.label}
                           className={cn(
-                            "h-3 w-3 rounded-full shrink-0 transition-all duration-200 hover:scale-125",
-                            isActive ? "bg-[#00f0ff] shadow-[0_0_6px_#00f0ff]" : "bg-red-500/70 hover:bg-red-400"
+                            "h-3 w-3 shrink-0 rounded-full transition-all duration-200 hover:scale-125",
+                            isActive
+                              ? "bg-[#00f0ff] shadow-[0_0_8px_#00f0ff,0_0_16px_rgba(0,240,255,0.45)]"
+                              : "bg-red-500/70 hover:bg-red-400 hover:shadow-[0_0_10px_rgba(239,68,68,0.5)]",
                           )}
                         />
                       );
@@ -635,13 +670,25 @@ export default function HubChat() {
                   {/* BOTTOM: upload, drive, share + send */}
                   <div className="px-3 pb-2.5 flex items-center justify-between border-t border-zinc-900">
                     <div className="flex items-center gap-0.5 pt-2">
-                      <button type="button" className="p-1.5 text-zinc-600 hover:text-zinc-300 transition-colors" title="upload file">
+                      <button
+                        type="button"
+                        className="rounded-none p-1.5 text-zinc-600 transition-all duration-300 hover:text-[#00f0ff] hover:shadow-[0_0_14px_rgba(0,240,255,0.25)]"
+                        title="upload file"
+                      >
                         <Paperclip className="h-4 w-4" />
                       </button>
-                      <button type="button" className="p-1.5 text-zinc-600 hover:text-zinc-300 transition-colors" title="connect to drive">
+                      <button
+                        type="button"
+                        className="rounded-none p-1.5 text-zinc-600 transition-all duration-300 hover:text-[#00f0ff] hover:shadow-[0_0_14px_rgba(0,240,255,0.25)]"
+                        title="connect to drive"
+                      >
                         <Database className="h-4 w-4" />
                       </button>
-                      <button type="button" className="p-1.5 text-zinc-600 hover:text-zinc-300 transition-colors" title="share">
+                      <button
+                        type="button"
+                        className="rounded-none p-1.5 text-zinc-600 transition-all duration-300 hover:text-[#00f0ff] hover:shadow-[0_0_14px_rgba(0,240,255,0.25)]"
+                        title="share"
+                      >
                         <Share2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -649,7 +696,7 @@ export default function HubChat() {
                       <Button
                         type="submit"
                         disabled={isLoading || !(input || '').trim()}
-                        className="h-8 w-8 p-0 bg-[#00f0ff] text-black hover:bg-[#00f0ff]/80 disabled:opacity-40 shrink-0 rounded-none"
+                        className="h-8 w-8 shrink-0 rounded-none border border-[rgba(0,240,255,0.55)] bg-[#00f0ff] p-0 text-black transition-all duration-300 hover:bg-[#00f0ff]/85 hover:shadow-[0_0_22px_rgba(0,240,255,0.55),0_0_44px_rgba(0,240,255,0.25)] disabled:opacity-40 disabled:hover:shadow-none"
                       >
                         <Send className="h-3.5 w-3.5" />
                       </Button>
@@ -663,52 +710,76 @@ export default function HubChat() {
 
           {/* RIGHT SIDEBAR: MCP + SKILLS + MACROS — compact checklist */}
           {isRightSidebarOpen && (
-            <aside className="w-52 border-l border-zinc-800 bg-black flex flex-col shrink-0">
-              <div className="px-3 py-2.5 border-b border-zinc-800 flex items-center justify-between">
-                <span className="text-[11px] font-[family-name:var(--font-syne)] font-bold lowercase text-white">connections</span>
-                <button onClick={() => setIsRightSidebarOpen(false)} className="text-zinc-500 hover:text-white transition-colors">
+            <aside className="flex w-52 shrink-0 flex-col border-l border-[rgba(0,240,255,0.12)] bg-black shadow-[-10px_0_40px_-12px_rgba(0,240,255,0.14)] transition-[border-color,box-shadow] duration-300">
+              <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2.5 shadow-[0_8px_24px_-12px_rgba(0,240,255,0.08)]">
+                <span className="text-[11px] font-bold lowercase text-white font-[family-name:var(--font-syne)]">connections</span>
+                <button
+                  onClick={() => setIsRightSidebarOpen(false)}
+                  className="text-zinc-500 transition-all duration-300 hover:text-[#00f0ff] hover:drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]"
+                >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
 
               <ScrollArea className="flex-1">
                 <div className="px-2 py-2 space-y-3">
-                  {/* MCP Servers */}
+                  {/* MCP Servers — switches (parity with Settings) */}
                   <div>
                     <h3 className="text-[9px] font-[family-name:var(--font-syne)] font-bold lowercase tracking-widest text-zinc-600 px-1 mb-1">mcp</h3>
                     <div className="space-y-0">
                       {MCP_SERVERS.map(mcp => {
                         const isActive = activeMcps.includes(mcp.id);
                         return (
-                          <button
+                          <div
                             key={mcp.id}
-                            onClick={() => setActiveMcps(prev => prev.includes(mcp.id) ? prev.filter(m => m !== mcp.id) : [...prev, mcp.id])}
-                            className="w-full flex items-center gap-2 px-1 py-1.5 text-left hover:bg-zinc-900/50 transition-colors"
+                            className="flex items-center justify-between gap-2 px-1 py-1.5 border-b border-zinc-900/60"
                           >
-                            <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", isActive ? "bg-green-500" : "bg-red-500/60")} />
-                            <span className={cn("text-[11px] lowercase", isActive ? "text-zinc-200" : "text-zinc-500")}>{mcp.name}</span>
-                          </button>
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", isActive ? "bg-green-500" : "bg-red-500/60")} />
+                              <span className={cn("text-[11px] lowercase truncate", isActive ? "text-zinc-200" : "text-zinc-500")}>{mcp.name}</span>
+                            </div>
+                            <Switch
+                              checked={isActive}
+                              onCheckedChange={(on) => setActiveMcps(prev =>
+                                on
+                                  ? (prev.includes(mcp.id) ? prev : [...prev, mcp.id])
+                                  : prev.filter(m => m !== mcp.id)
+                              )}
+                              className="data-[state=checked]:bg-green-500 rounded-none shrink-0 scale-90 origin-right"
+                              aria-label={`toggle ${mcp.name}`}
+                            />
+                          </div>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Skills */}
+                  {/* Skills — switches (parity with Settings) */}
                   <div>
                     <h3 className="text-[9px] font-[family-name:var(--font-syne)] font-bold lowercase tracking-widest text-zinc-600 px-1 mb-1">skills</h3>
                     <div className="space-y-0">
                       {SKILLS.map(skill => {
                         const isActive = activeSkills.includes(skill.id);
                         return (
-                          <button
+                          <div
                             key={skill.id}
-                            onClick={() => setActiveSkills(prev => prev.includes(skill.id) ? prev.filter(s => s !== skill.id) : [...prev, skill.id])}
-                            className="w-full flex items-center gap-2 px-1 py-1.5 text-left hover:bg-zinc-900/50 transition-colors"
+                            className="flex items-center justify-between gap-2 px-1 py-1.5 border-b border-zinc-900/60"
                           >
-                            <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", isActive ? "bg-green-500" : "bg-red-500/60")} />
-                            <span className={cn("text-[11px] lowercase flex-1", isActive ? "text-zinc-200" : "text-zinc-500")}>{skill.name}</span>
-                            <skill.icon className={cn("h-3 w-3 shrink-0", isActive ? "text-green-500/70" : "text-zinc-700")} />
-                          </button>
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <skill.icon className={cn("h-3 w-3 shrink-0", isActive ? "text-[#00f0ff]" : "text-zinc-600")} />
+                              <span className={cn("text-[11px] lowercase truncate", isActive ? "text-zinc-200" : "text-zinc-500")}>{skill.name}</span>
+                            </div>
+                            <Switch
+                              checked={isActive}
+                              onCheckedChange={(on) => setActiveSkills(prev =>
+                                on
+                                  ? (prev.includes(skill.id) ? prev : [...prev, skill.id])
+                                  : prev.filter(s => s !== skill.id)
+                              )}
+                              className="data-[state=checked]:bg-[#00f0ff] rounded-none shrink-0 scale-90 origin-right"
+                              aria-label={`toggle ${skill.name}`}
+                            />
+                          </div>
                         );
                       })}
                     </div>
@@ -732,7 +803,7 @@ export default function HubChat() {
                           <div key={macro.id} className="relative group">
                             <button
                               onClick={() => fireMacro(macro)}
-                              className="w-full flex items-center gap-2 px-1 py-1.5 hover:bg-zinc-900/50 transition-colors text-left"
+                              className="flex w-full items-center gap-2 border border-transparent px-1 py-1.5 text-left transition-all duration-300 hover:border-[rgba(0,240,255,0.2)] hover:bg-[rgba(0,240,255,0.06)] hover:shadow-[0_0_12px_rgba(0,240,255,0.12)]"
                             >
                               <Icon className="h-3 w-3 text-zinc-600 group-hover:text-[#00f0ff] shrink-0" />
                               <span className="text-[11px] lowercase text-zinc-400 group-hover:text-white truncate">{macro.name}</span>
@@ -760,7 +831,7 @@ export default function HubChat() {
 
       {/* PERSONA MODAL */}
       <Dialog open={isPersonaModalOpen} onOpenChange={setIsPersonaModalOpen}>
-        <DialogContent className="bg-zinc-950/80 backdrop-blur-sm border-zinc-800 rounded-none max-w-md">
+        <DialogContent className="max-w-md rounded-none border-[rgba(0,240,255,0.18)] bg-zinc-950/80 shadow-[0_0_40px_rgba(0,240,255,0.12),0_0_80px_rgba(0,240,255,0.06)] backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="font-[family-name:var(--font-syne)] lowercase text-white">new persona</DialogTitle>
           </DialogHeader>
@@ -822,7 +893,7 @@ export default function HubChat() {
 
       {/* MACRO MODAL */}
       <Dialog open={isMacroModalOpen} onOpenChange={setIsMacroModalOpen}>
-        <DialogContent className="bg-zinc-950/80 backdrop-blur-sm border-zinc-800 rounded-none max-w-md">
+        <DialogContent className="max-w-md rounded-none border-[rgba(0,240,255,0.18)] bg-zinc-950/80 shadow-[0_0_40px_rgba(0,240,255,0.12),0_0_80px_rgba(0,240,255,0.06)] backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="font-[family-name:var(--font-syne)] lowercase text-white">new macro</DialogTitle>
           </DialogHeader>
@@ -861,10 +932,10 @@ export default function HubChat() {
 
       {/* SETTINGS MODAL */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="bg-black border-zinc-800 rounded-none max-w-lg">
+        <DialogContent className="max-w-lg rounded-none border-[rgba(0,240,255,0.2)] bg-black shadow-[0_0_48px_rgba(0,240,255,0.14),0_0_96px_rgba(0,240,255,0.06)]">
           <DialogHeader>
             <DialogTitle className="font-[family-name:var(--font-syne)] lowercase text-white flex items-center gap-2">
-              <Settings className="h-5 w-5 text-[#00f0ff]" />
+              <Settings className="h-5 w-5 text-[#00f0ff] drop-shadow-[0_0_10px_rgba(0,240,255,0.7)]" />
               settings
             </DialogTitle>
           </DialogHeader>

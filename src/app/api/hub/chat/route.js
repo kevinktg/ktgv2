@@ -4,7 +4,9 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, tool, convertToModelMessages, stepCountIs } from "ai";
 import { z } from "zod";
 
-export const runtime = "edge";
+// Node.js: more reliable for streamText + multi-provider AI SDK on Vercel than Edge
+// (Edge can hard-fail or behave oddly with some provider stacks.)
+export const runtime = "nodejs";
 
 // --- AI Gateway: 8+ model families ---
 // Each provider reads its own env var. Only configure the ones you have keys for.
@@ -101,7 +103,8 @@ function resolveModel(modelId) {
 }
 
 // Skill definitions — real implementations
-function buildTools(activeSkills = [], activeMcps = []) {
+// baseUrl: same-origin URL for server-side fetch (use Request URL in POST; avoids missing VERCEL_URL)
+function buildTools(activeSkills = [], activeMcps = [], baseUrl = "http://localhost:3000") {
   const tools = {};
 
   // Code Execution skill — uses Gemini's native code execution
@@ -150,11 +153,8 @@ function buildTools(activeSkills = [], activeMcps = []) {
         if (type) params.set("type", type);
 
         try {
-          const baseUrl = process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : "http://localhost:3000";
           const res = await fetch(
-            `${baseUrl}/api/hub/snippets?${params.toString()}`
+            `${baseUrl.replace(/\/$/, "")}/api/hub/snippets?${params.toString()}`
           );
           if (!res.ok) throw new Error("Snippets API error");
           const snippets = await res.json();
@@ -175,7 +175,8 @@ function buildTools(activeSkills = [], activeMcps = []) {
     });
   }
 
-  // MCP-sourced tools — each active MCP server can inject capabilities
+  // MCP-sourced tools — only stubs below; context7 / gemini-bridge / chrome-devtools toggles
+  // do not add tools yet (no @ai-sdk/mcp transport). UI state is still sent for future wiring.
   if (activeMcps.includes("filesystem")) {
     tools.listFiles = tool({
       description: "List files in the project directory structure",
@@ -204,14 +205,17 @@ export async function POST(req) {
     activeMcps,
   } = await req.json();
 
+  const requestUrl = new URL(req.url);
+  const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+
   const resolvedModel = resolveModel(model);
   const entry = MODEL_REGISTRY[model];
 
   // FIX 1: Convert UIMessage[] from useChat to model-compatible format
   const modelMessages = await convertToModelMessages(messages);
 
-  // Build active tools from skills + MCPs
-  const tools = buildTools(activeSkills, activeMcps);
+  // Build active tools from skills + MCPs (snippets skill calls same deployment)
+  const tools = buildTools(activeSkills, activeMcps, baseUrl);
 
   // FIX 2: Google search grounding uses google.tools.googleSearch, not providerOptions
   // Also: Google API doesn't allow custom tools + search together

@@ -128,7 +128,7 @@ export function CursorDot() {
         <div
           key={i}
           ref={(el) => (dotsRef.current[i] = el)}
-          className="absolute w-3 h-3 bg-white rounded-full mix-blend-difference will-change-transform"
+          className="pointer-events-none absolute w-3 h-3 bg-white rounded-full mix-blend-difference will-change-transform"
           style={{ 
             opacity: 0, // Handled by GSAP
             // Use 'mix-blend-difference' to invert colors over white backgrounds, 

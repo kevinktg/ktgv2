@@ -2,11 +2,13 @@
 
 **Analysis Date:** 2026-03-23
 
+> **2026-04 routing truth:** **One** deployable Next.js app. **`src/app/ulti-chat/`** removed. Integrated hub chat uses **root** dependencies (`ai`, `@ai-sdk/*`) in **`src/app/hub/chat/`** (JSX) + **`src/app/api/hub/chat/route.js`**. Rows below that mention a separate “ulti-chat” version refer to **`_reference/ulti-chat/`** (historical / local-only) unless stated otherwise.
+
 ## Languages
 
 **Primary:**
 - JavaScript (JSX) — Main app (`src/app/`, `src/components/`, `src/lib/`) uses `.js` and `.jsx` files, not TypeScript
-- TypeScript — ulti-chat sub-app (`src/app/ulti-chat/`) uses `.ts` and `.tsx` files with strict type checking
+- TypeScript — **only** if still present under **`_reference/ulti-chat/`** (not part of App Router builds)
 
 **Secondary:**
 - None (CSS handled via Tailwind)
@@ -102,9 +104,8 @@
 - `drizzle-kit` 0.31.8 — Migration tooling for Drizzle
 
 **AI & APIs:**
-- `@google/genai` 1.17.0 (ulti-chat) — Google Gemini AI API client
-- `@ai-sdk/openai` 3.0.12 (main app) — Vercel AI SDK for OpenAI (not actively used in current code)
-- `ai` 6.0.5 (main app) — Vercel AI SDK core library (streaming, tool calling)
+- `@google/genai` — dependency may remain for non–hub-chat usage; **hub chat** uses **Vercel AI SDK** (`ai`, `@ai-sdk/google`, `@ai-sdk/anthropic`, `@ai-sdk/openai` per root `package.json`)
+- `@ai-sdk/*` + `ai` (main app) — streaming chat, tools, **`/api/hub/chat`**
 
 **Infrastructure:**
 - `zustand` 4.5.7 (main app) — Lightweight state management
@@ -118,19 +119,16 @@
 - `BLOB_READ_WRITE_TOKEN` — Vercel Blob read/write token
 - `NEXT_PUBLIC_WORDPRESS_URL` — External WordPress blog URL (optional, defaults to `https://lawngreen-mallard-558077.hostingersite.com`)
 
-**ulti-chat Environment:**
-- `GEMINI_API_KEY` — Google Gemini API key (injected by AI Studio at runtime)
-- `APP_URL` — Cloud Run service URL (injected by AI Studio at runtime)
+**`_reference/ulti-chat` (if kept locally):** May document its own env vars — **not** the Vercel hub contract.
 
 **Build:**
 - `next.config.js` (main app) — Optimizations: Turbopack, image optimization, output file tracing
-- `src/app/ulti-chat/next.config.ts` (ulti-chat) — Standalone config with `output: 'standalone'` for Cloud Run deployment
 - `drizzle.config.js` — Database schema location and PostgreSQL dialect
 - `jsconfig.json` — Path alias `@/*` maps to `./src/*`
 - `vercel.json` — Deployment config for main app: Node.js region, npm legacy peer deps flag
 
 **Post-CSS:**
-- `postcss.config.mjs` (ulti-chat) — PostCSS configuration for Tailwind
+- `postcss.config.mjs` (root) — PostCSS configuration for Tailwind
 
 ## Platform Requirements
 
@@ -139,8 +137,8 @@
 - npm 8+ (for `--legacy-peer-deps` flag)
 
 **Production:**
-- Vercel deployment (main app) — Primary host for `ktg.one`
-- Google Cloud Run (ulti-chat) — AI Studio deployment target (`DISABLE_HMR` env var disables hot module reload during agent edits)
+- Vercel deployment (main app) — Primary host for `ktg.one` (**includes hub chat**)
+- **Optional legacy:** A standalone ulti-chat deploy (e.g. Cloud Run) is **out of scope** for this repo’s App Router — see `_reference/` if it exists
 - Vercel Postgres — Managed PostgreSQL database
 - Vercel Blob — File storage service
 - External WordPress instance at `lawngreen-mallard-558077.hostingersite.com` — Blog data source

@@ -115,7 +115,11 @@ export default async function BlogPostPage({ params }) {
             back to blog
           </Link>
 
-          <article itemScope itemType="https://schema.org/BlogPosting">
+          <article
+            className="blog-post"
+            itemScope
+            itemType="https://schema.org/BlogPosting"
+          >
             {/* Title */}
             <h1 className="font-syne text-4xl md:text-5xl lg:text-6xl font-bold mb-6 lowercase leading-tight" itemProp="headline">
               {post.title.rendered}
@@ -148,15 +152,15 @@ export default async function BlogPostPage({ params }) {
 
             {/* Content */}
             <div
-              className="prose prose-invert prose-lg max-w-none
+              className="blog-post-body prose prose-invert prose-lg max-w-none
                 prose-headings:font-syne prose-headings:lowercase
                 prose-headings:text-white prose-headings:font-bold
-                prose-h1:text-3xl md:prose-h1:text-4xl prose-h1:mt-12 prose-h1:mb-6
-                prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-10 prose-h2:mb-4
+                prose-h1:text-3xl md:prose-h1:text-4xl prose-h1:mt-10 prose-h1:mb-5
+                prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-9 prose-h2:mb-4
                 prose-h3:text-xl md:prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-3
                 prose-h4:text-lg prose-h4:mt-6 prose-h4:mb-2
-                prose-p:text-white/80 prose-p:leading-relaxed prose-p:font-light
-                prose-p:text-base md:prose-p:text-lg
+                prose-p:font-inter prose-p:text-white/80 prose-p:leading-[1.75] prose-p:font-light
+                prose-p:text-base md:prose-p:text-lg prose-p:my-4
                 prose-a:text-emerald-400 prose-a:underline prose-a:underline-offset-4
                 prose-a:decoration-emerald-400/30 hover:prose-a:decoration-emerald-400
                 prose-strong:text-white prose-strong:font-semibold
@@ -166,9 +170,9 @@ export default async function BlogPostPage({ params }) {
                 prose-img:rounded-xl prose-img:border prose-img:border-white/10
                 prose-blockquote:border-l-2 prose-blockquote:border-white/20
                 prose-blockquote:text-white/60 prose-blockquote:italic prose-blockquote:pl-6
-                prose-ul:text-white/80 prose-ol:text-white/80
-                prose-li:text-white/80 prose-li:marker:text-white/30
-                prose-hr:border-white/10"
+                prose-ul:text-white/80 prose-ul:my-6 prose-ol:text-white/80 prose-ol:my-6
+                prose-li:text-white/80 prose-li:my-1.5 prose-li:leading-[1.75] prose-li:marker:text-white/30
+                prose-hr:border-white/10 [&>*:first-child]:mt-0"
               dangerouslySetInnerHTML={{ __html: post.content.rendered }}
             />
           </article>

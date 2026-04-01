@@ -2,6 +2,12 @@
 
 **Scope (source of truth):** Runtime behaviour: `src/app/**` and `src/app/api/**`. Hub narrative: this file + `.planning/ROADMAP.md`. Legacy AI Studio copy: `_reference/ulti-chat/` (gitignored), **moved** from `src/app/ulti-chat/` during integration — not an ad-hoc delete.
 
+**Planning scope (three lanes — do not conflate):**
+
+1. **Marketing / public site** — Homepage, `/blog`, `/expertise`, `/validation`, shell + motion (GSD phases **01-marketing-shell**, Lighthouse, WordPress reliability). Success = pages render, blog pulls CMS, QA from `01-02-PLAN.md` closed or deferred with a note.
+2. **Hub chat (feature work)** — **`/hub/chat`** UI, **`/api/hub/chat`** (and related **`/api/hub/*`**) on branch `feature/ulti-chat-integration` until merge. Success = Phase 6 smoke recorded, Phase 7 scoped/deferred, then merge to `main`. See hub table below.
+3. **Post-merge default** — One canonical tree on **`main`**: marketing plus hub routes in the **same** Next app (no `src/app/ulti-chat/`). Planning folds hub into the single **ROADMAP** (e.g. hub as phases 4+ per `.planning/ROADMAP.md`). **`_reference/ulti-chat/`** remains optional local-only reference, not production.
+
 **Roadmap evolution (2026-04-01):** GSD roadmapper: keep **marketing 1–3** and **hub branch** as two visible tracks until merge; after `main` merge, fold hub into **Phases 4+**. See `.planning/ROADMAP.md` → Planning discipline + Roadmap evolution.
 
 ## Project Reference
@@ -90,7 +96,7 @@ Hub chat todos (from progress.md):
 ### Blockers/Concerns
 
 - **Phase 6 evidence:** If keys exist only on Vercel, validate on **preview/production URLs**; local `.env.local` optional via `vercel env pull .env.local`.
-- **Zod:** Root declares `^4.3.6`; lockfile may list multiple resolutions (including 3.x for transitive deps). Before treating Phase 6 as production-proof, confirm `npm ci` / `pnpm install` reproduces clean build on CI; resolve only if installs or `tool()` break.
+- **Zod (re-verified 2026-04-01):** Root **`package.json`** declares **`zod@^4.3.6`**. `pnpm` installs **`zod@4.3.6`** for **AI SDK / hub** paths; **some** other packages (e.g. Next internals, drizzle-kit, puppeteer) still pull **`zod@3.25.76`** in parallel — `npm ls zod` may show peer “invalid” noise, but **`npm run build`** succeeds. **Not a Phase 6 blocker** unless runtime `tool()` / schema errors appear; align lockfile only in a dedicated deps task.
 - Google search grounding incompatible with custom tools (Google API constraint) — already handled in route.js with conditional logic.
 
 ## Session Continuity

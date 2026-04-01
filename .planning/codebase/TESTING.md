@@ -9,7 +9,7 @@
 - No test runner (Jest, Vitest, etc.) in dependencies
 - No test files (`.test.js`, `.spec.js`, `.test.tsx`) in the source
 - Verification is done manually via `pnpm dev` and browser testing
-- This applies to both main app and ulti-chat
+- **Hub chat** (`/hub/chat`) is exercised manually like other routes; integrated in the same app (no separate ulti-chat dev server in `src/app/`)
 
 ---
 
@@ -608,7 +608,7 @@ npm run test -- --grep "API routes"
 
 3. **Next.js Integration:** Some Next.js features (Image optimization, font loading, metadata) are hard to unit test effectively.
 
-4. **ulti-chat Isolation:** Testing ulti-chat requires mocking the Google GenAI API; no example tests provided in codebase.
+4. **Hub chat / AI APIs:** No automated API mocks in repo; manual or future E2E should cover **`POST /api/hub/chat`** with test keys. Historical `_reference/ulti-chat/` may have used `@google/genai` separately — not the integrated hub path.
 
 ---
 
