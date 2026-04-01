@@ -134,21 +134,19 @@ export default async function BlogPostPage({ params }) {
               <span>.ktg</span>
             </div>
 
-            {/* Featured Image */}
-            {featuredImage && (
-              <div className="mb-12 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900">
-                <Image
-                  src={featuredImage}
-                  alt={post.title.rendered}
-                  width={1200}
-                  height={630}
-                  className="w-full h-auto"
-                  priority
-                  sizes="(max-width: 768px) 100vw, 1200px" // Optimization for mobile LCP
-                  itemProp="image"
-                />
-              </div>
-            )}
+            {/* Featured image or local placeholder when WordPress has no featured media */}
+            <div className="mb-12 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900">
+              <Image
+                src={featuredImage || "/assets/ktg.svg"}
+                alt={post.title.rendered}
+                width={1200}
+                height={630}
+                className="w-full h-auto"
+                priority
+                sizes="(max-width: 768px) 100vw, 1200px"
+                itemProp="image"
+              />
+            </div>
 
             {/* Content */}
             <div

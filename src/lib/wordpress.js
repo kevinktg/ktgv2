@@ -4,11 +4,12 @@
  * Fetch policy (matches .planning/PROJECT.md Constraints):
  * - Health / connection checks → cache: 'no-store' (live CMS reachability).
  * - Post list + post-by-slug reads → next: { revalidate: 60 } (ISR, balance freshness vs load).
+ *
+ * All `/wp-json/.../posts` requests use fetchWithTimeout (bounded I/O).
  */
 const WORDPRESS_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || 'https://lawngreen-mallard-558077.hostingersite.com';
 const REQUEST_TIMEOUT = 10000; // 10 second timeout
 
-// Helper: fetch with timeout
 async function fetchWithTimeout(url, options = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
@@ -33,7 +34,7 @@ export async function testWordPressConnection() {
     return response.ok;
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.error('WordPress connection test timed out');
+      console.error('WordPress connection test timed out (AbortError)');
     } else {
       console.error('WordPress connection test failed:', error);
     }
@@ -45,13 +46,13 @@ export async function testWordPressConnection() {
 export async function getPosts(page = 1, perPage = 10) {
   try {
     const url = `${WORDPRESS_URL}/wp-json/wp/v2/posts?_embed&per_page=${perPage}&page=${page}`;
-    
-    const response = await fetch(url, {
+
+    const response = await fetchWithTimeout(url, {
       next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds for dynamic pages
       headers: {
         'User-Agent': 'Next.js WordPress Client',
-        'Accept': 'application/json',
-        'Referer': WORDPRESS_URL,
+        Accept: 'application/json',
+        Referer: WORDPRESS_URL,
       },
     });
 
@@ -63,18 +64,24 @@ export async function getPosts(page = 1, perPage = 10) {
 
       // Try without _embed if 403
       if (response.status === 403) {
-        console.warn('Attempting fetch without _embed parameter...');
+        console.warn('WordPress: attempting fetch without _embed parameter...');
         const fallbackResponse = await fetchWithTimeout(
           `${WORDPRESS_URL}/wp-json/wp/v2/posts?per_page=${perPage}&page=${page}`,
           {
             next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds
             headers: {
               'User-Agent': 'Next.js WordPress Client',
-              'Accept': 'application/json',
-              'Referer': WORDPRESS_URL,
+              Accept: 'application/json',
+              Referer: WORDPRESS_URL,
             },
           }
         );
+
+        if (!fallbackResponse.ok) {
+          console.error(
+            `WordPress API error (fallback): ${fallbackResponse.status} - ${fallbackResponse.statusText}`
+          );
+        }
 
         if (fallbackResponse.ok) {
           return await fallbackResponse.json();
@@ -85,38 +92,42 @@ export async function getPosts(page = 1, perPage = 10) {
     }
 
     const data = await response.json();
-    
+
     // Validate response is an array
     if (!Array.isArray(data)) {
       console.error('WordPress API returned non-array response:', typeof data);
       return [];
     }
-    
+
     return data;
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.error('WordPress API request timed out');
+      console.error('WordPress API: AbortError (timeout) while fetching posts list');
     } else {
-      console.error('Error fetching WordPress posts:', error);
+      console.error('WordPress API: error fetching posts:', error);
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
+        console.error('WordPress API error message:', error.message);
       }
     }
     return [];
   }
 }
 
-// Fetch a single post by slug
+/**
+ * Post HTML from WordPress (`content.rendered`) is published in the CMS; **trust** in that
+ * editorial/admin boundary. The blog template renders it with **dangerouslySetInnerHTML**
+ * inside Tailwind **prose** — not a sanitizer in this client.
+ */
 export async function getPostBySlug(slug) {
   try {
-    const url = `${WORDPRESS_URL}/wp-json/wp/v2/posts?slug=${slug}&_embed`;
-    
-    const response = await fetch(url, {
+    const url = `${WORDPRESS_URL}/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed`;
+
+    const response = await fetchWithTimeout(url, {
       next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds for dynamic pages
       headers: {
         'User-Agent': 'Next.js WordPress Client',
-        'Accept': 'application/json',
-        'Referer': WORDPRESS_URL,
+        Accept: 'application/json',
+        Referer: WORDPRESS_URL,
       },
     });
 
@@ -128,18 +139,24 @@ export async function getPostBySlug(slug) {
 
       // Try without _embed if 403
       if (response.status === 403) {
-        console.warn('Attempting fetch without _embed parameter...');
+        console.warn('WordPress: attempting fetch without _embed parameter...');
         const fallbackResponse = await fetchWithTimeout(
           `${WORDPRESS_URL}/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}`,
           {
             next: { revalidate: 60 }, // ISR: Revalidate every 60 seconds
             headers: {
               'User-Agent': 'Next.js WordPress Client',
-              'Accept': 'application/json',
-              'Referer': WORDPRESS_URL,
+              Accept: 'application/json',
+              Referer: WORDPRESS_URL,
             },
           }
         );
+
+        if (!fallbackResponse.ok) {
+          console.error(
+            `WordPress API error (fallback): ${fallbackResponse.status} - ${fallbackResponse.statusText}`
+          );
+        }
 
         if (fallbackResponse.ok) {
           const posts = await fallbackResponse.json();
@@ -154,11 +171,11 @@ export async function getPostBySlug(slug) {
     return posts.length > 0 ? posts[0] : null;
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.error('WordPress API request timed out');
+      console.error('WordPress API: AbortError (timeout) while fetching post by slug');
     } else {
-      console.error('Error fetching WordPress post:', error);
+      console.error('WordPress API: error fetching post:', error);
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
+        console.error('WordPress API error message:', error.message);
       }
     }
     return null;
@@ -189,4 +206,3 @@ export function formatDate(dateString) {
     return '';
   }
 }
-

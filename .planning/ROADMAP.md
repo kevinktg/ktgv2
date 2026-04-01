@@ -41,7 +41,7 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Plans**
 
-- [ ] **01-01** — [GSAP + Lenis correctness](phases/01-marketing-shell/01-01-PLAN.md) — ESM ScrollTrigger in Lenis bridge; `useGSAP` scope/deps; BlogPreview wheel + ScrollTrigger API fixes
+- [ ] **01-01** — [GSAP + Lenis correctness](phases/01-marketing-shell/01-01-PLAN.md) — ESM ScrollTrigger in Lenis bridge; `useGSAP` scope/deps; ScrollTrigger API fixes across homepage sections
 - [ ] **01-02** — [Shell, hydration, motion QA](phases/01-marketing-shell/01-02-PLAN.md) — Route walkthrough, reduced-motion / transition hardening
 
 ### Phase 2: WordPress content & blog
@@ -61,8 +61,8 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Plans**
 
-- [ ] **02-01** — WordPress client hardening — timeouts on all fetches, consistent error surfaces, HTML trust note for `dangerouslySetInnerHTML`
-- [ ] **02-02** — Blog routes — index + `[slug]` + not-found; featured media fallbacks; pagination strategy if needed
+- [x] **02-01** — [WordPress client hardening](phases/02-wordpress-content-blog/02-01-PLAN.md) — timeouts on all fetches, consistent error surfaces, HTML trust note for `dangerouslySetInnerHTML`
+- [x] **02-02** — [Blog routes](phases/02-wordpress-content-blog/02-02-PLAN.md) — index + `[slug]` + not-found; featured media fallbacks; pagination strategy if needed
 
 ### Phase 3: SEO & operations
 **Goal:** Search and social surfaces reflect core routes and blog posts; production builds and monitoring match documented constraints.
@@ -118,7 +118,7 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Marketing shell & motion | 1/2 | In progress (01-01 complete; 01-02 QA pending) | - |
-| 2. WordPress content & blog | 0/2 | Not started | - |
+| 2. WordPress content & blog | 2/2 | Complete (executed 2026-04-01) | 2026-04-01 |
 | 3. SEO & operations | 0/2 | Not started | - |
 
 ---

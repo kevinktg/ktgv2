@@ -25,8 +25,9 @@ export default async function BlogPage() {
   let posts = [];
   
   try {
-    // 1. Fetch posts (now safely cached for 60s)
-    posts = await getPosts();
+    // Post list: v1 loads one REST page (up to 100 posts) via getPosts(1, 100).
+    // Add /blog?page=2 style pagination if the catalog grows beyond that.
+    posts = await getPosts(1, 100);
   } catch (error) {
     console.error('Error loading blog posts:', error);
     // Graceful fallback so the page doesn't crash
@@ -104,20 +105,17 @@ export default async function BlogPage() {
                     key={post.id}
                     className="group relative flex flex-col md:flex-row gap-8 pb-12 border-b border-white/10 last:border-0"
                   >
-                    {/* OPTIMIZATION: Image container */}
-                    {featuredImage && (
-                      <div className="w-full md:w-1/3 shrink-0 overflow-hidden rounded-xl bg-neutral-900">
-                        <Image
-                          src={featuredImage}
-                          alt={title}
-                          width={600}
-                          height={400}
-                          className="w-full h-56 md:h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          // OPTIMIZATION: 'sizes' helps browser download smaller images on mobile
-                          sizes="(max-width: 768px) 100vw, 300px"
-                        />
-                      </div>
-                    )}
+                    {/* Featured image or local placeholder when WordPress has no `_embed` media */}
+                    <div className="w-full md:w-1/3 shrink-0 overflow-hidden rounded-xl bg-neutral-900">
+                      <Image
+                        src={featuredImage || "/assets/ktg.svg"}
+                        alt={title}
+                        width={600}
+                        height={400}
+                        className="w-full h-56 md:h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 300px"
+                      />
+                    </div>
 
                     {/* Content */}
                     <div className="flex-1 flex flex-col justify-center">
