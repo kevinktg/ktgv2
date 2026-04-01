@@ -65,7 +65,8 @@ See: `.planning/PROJECT.md` (updated 2026-04-01)
 
 ### Pending Todos
 
-4+ todos in `.planning/todos/pending/` include:
+5+ todos in `.planning/todos/pending/` include:
+- `2026-04-01-philosophy-section-safe-gsap-scroll-typography.md` — optional Philosophy-only GSAP scroll type motion; z-index / reduced-motion safe
 - `2026-04-01-document-hub-chat-single-vs-dual-playground-mode.md` — document playground-style single/dual mode + UX contract (wire second `useChat` when dual)
 - `2026-04-01-planning-md-only-and-doc-backlog.md` — markdown-only alignment, ulti-chat narrative, AGENTS/PROJECT/STATE follow-ups
 - Invoke skill before executing (general)
