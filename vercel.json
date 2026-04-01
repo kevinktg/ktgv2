@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
   "regions": ["iad1"],
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "pnpm install --frozen-lockfile"
 }
 
