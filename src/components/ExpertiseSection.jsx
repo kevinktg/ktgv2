@@ -3,6 +3,7 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { useRef, useMemo, forwardRef, useState, useEffect } from "react";
+import { SplitText } from "@/components/SplitText";
 
 // Helper Component for the stats at the bottom
 const StatBox = ({ label, value, isFloat, suffix }) => (
@@ -65,6 +66,7 @@ export const ExpertiseSection = forwardRef(({ expertiseData }, ref) => {
       }
       // If played, set final state immediately
       gsap.set(".expertise-title", { opacity: 1, y: 0 });
+      gsap.set(".expertise-title .split-char", { opacity: 1, y: 0, scale: 1 });
       gsap.set(".expertise-group", { opacity: 1, y: 0 });
       gsap.set(".stat-label", { opacity: 1, y: 0 });
       gsap.set(".stat-counter", { opacity: 1, y: 0 });
@@ -106,12 +108,26 @@ export const ExpertiseSection = forwardRef(({ expertiseData }, ref) => {
       duration: 2 // Relative duration in the scrub timeline
     });
 
-    // STEP B: Title Reveal (20% - 50%)
-    tl.fromTo(".expertise-title",
-      { y: 50, opacity: 0 },
-      { y: 0, opacity: 1, ease: "power2.out", duration: 2 },
-      "-=1.5"
-    );
+    // STEP B: Title Reveal — character-level scatter from center
+    const titleChars = containerRef.current?.querySelectorAll(".expertise-title .split-char");
+    if (titleChars?.length) {
+      gsap.set(titleChars, { opacity: 0, y: 60, scale: 0.5, willChange: "transform, opacity" });
+      tl.to(titleChars, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        stagger: { each: 0.025, from: "center" },
+        ease: "expo.out",
+        duration: 2,
+      }, "-=1.5");
+    } else {
+      // Fallback if SplitText hasn't rendered
+      tl.fromTo(".expertise-title",
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, ease: "power2.out", duration: 2 },
+        "-=1.5"
+      );
+    }
 
     // STEP C: Skills Reveal (40% - 80%)
     const groups = gsap.utils.toArray(".expertise-group");
@@ -196,7 +212,7 @@ export const ExpertiseSection = forwardRef(({ expertiseData }, ref) => {
 
         {/* Header */}
         <h2 className="expertise-title mb-20 text-center text-4xl md:text-6xl font-syne font-bold lowercase tracking-tighter text-black">
-          expertise_matrix
+          <SplitText>expertise_matrix</SplitText>
         </h2>
 
         {/* Grid */}

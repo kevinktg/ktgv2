@@ -1,0 +1,4 @@
+# Prevent Cursor from editing its own rules and meta-files
+.cursor/
+.planning/
+AGENTS.md

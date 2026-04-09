@@ -1,12 +1,12 @@
-# Roadmap: KTG One (ktgv2)
+﻿# Roadmap: KTG One (ktgv2)
 
 ## Overview
 
 Deliver a production-ready KTG One site in three coarse milestones: first a consistent marketing shell with Lenis/GSAP discipline; then WordPress-backed blog reading with safe HTML and predictable errors; finally SEO surfaces and operational reliability (build/CI, monitoring) so visitors can find the site and the team can ship with confidence.
 
-A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub chat at `/hub/chat` — this is separate from the v1 marketing milestone but tracked here.
+A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub chat at `/hub/chat` â€” this is separate from the v1 marketing milestone but tracked here.
 
-**Two tracks until merge:** The table under [Progress](#progress) is **marketing phases 1–3 only**. Hub chat progress lives in the **Hub Chat Feature Branch** table below and in `.planning/STATE.md`. After this branch merges to `main`, fold hub work into **Phases 4+** as a single ordered roadmap.
+**Two tracks until merge:** The table under [Progress](#progress) is **marketing phases 1â€“3 only**. Hub chat progress lives in the **Hub Chat Feature Branch** table below and in `.planning/STATE.md`. After this branch merges to `main`, fold hub work into **Phases 4+** as a single ordered roadmap.
 
 ## Planning discipline
 
@@ -20,9 +20,29 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Phase numbering:** Integer phases (1, 2, 3) for this milestone. Decimal phases reserved for urgent inserts via `/gsd:insert-phase`.
 
-- [ ] **Phase 1: Marketing shell & motion** — Shared layout, client shell, GSAP/Lenis sync and performance rules
-- [ ] **Phase 2: WordPress content & blog** — CMS adapter usage, post detail, index, not-found, HTML trust stance
-- [ ] **Phase 3: SEO & operations** — Metadata, social previews, sitemap, build/CI, Speed Insights
+- [ ] **Phase 1: Marketing shell & motion** â€” Shared layout, client shell, GSAP/Lenis sync and performance rules
+- [ ] **Phase 2: WordPress content & blog** â€” CMS adapter usage, post detail, index, not-found, HTML trust stance
+- [ ] **Phase 3: SEO & operations** â€” Metadata, social previews, sitemap, build/CI, Speed Insights
+- [ ] **Phase 5: Hub Chat Production** — Integrated streaming chat at /hub/chat with multi-model support, MCPs, and GSAP animations
+
+### Phase 5: Hub Chat Production
+**Goal:** Implement the production-ready AI chat gateway with streaming, tool calling, and high-end animations.
+
+**Depends on:** Phase 1 (for motion shell)
+
+**Requirements:** HUB-PH2, HUB-PH5, HUB-PH6, HUB-PH7
+
+**Success Criteria** (what must be TRUE):
+  1. Visitor can chat with multiple models (Gemini, Claude, GPT) at /hub/chat.
+  2. Messages stream in real-time with smooth GSAP transitions.
+  3. User can toggle web search (grounding) and use active MCP/Skills (db-access).
+  4. Chat settings persist via localStorage.
+
+**Plans**
+
+- [ ] **05-01** — [API & Page Scaffolding](phases/05-hub-chat-production/05-01-PLAN.md) — Multi-provider POST route; useChat hook integration
+- [ ] **05-02** — [Logic & UI Components](phases/05-hub-chat-production/05-02-PLAN.md) — ChatControls (Model/Search/MCPs); settings persistence
+- [ ] **05-03** — [UX Refinement & Tooling](phases/05-hub-chat-production/05-03-PLAN.md) — GSAP message animations; db-access tool verification
 
 ## Phase Details
 
@@ -41,8 +61,8 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Plans**
 
-- [ ] **01-01** — [GSAP + Lenis correctness](phases/01-marketing-shell/01-01-PLAN.md) — ESM ScrollTrigger in Lenis bridge; `useGSAP` scope/deps; ScrollTrigger API fixes across homepage sections
-- [ ] **01-02** — [Shell, hydration, motion QA](phases/01-marketing-shell/01-02-PLAN.md) — Route walkthrough, reduced-motion / transition hardening
+- [ ] **01-01** â€” [GSAP + Lenis correctness](phases/01-marketing-shell/01-01-PLAN.md) â€” ESM ScrollTrigger in Lenis bridge; `useGSAP` scope/deps; ScrollTrigger API fixes across homepage sections
+- [ ] **01-02** â€” [Shell, hydration, motion QA](phases/01-marketing-shell/01-02-PLAN.md) â€” Route walkthrough, reduced-motion / transition hardening
 
 ### Phase 2: WordPress content & blog
 **Goal:** Visitors can list and read WordPress posts with stable URLs, embedded media, safe HTML rendering, and clear handling of missing or failed content.
@@ -61,8 +81,8 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Plans**
 
-- [x] **02-01** — [WordPress client hardening](phases/02-wordpress-content-blog/02-01-PLAN.md) — timeouts on all fetches, consistent error surfaces, HTML trust note for `dangerouslySetInnerHTML`
-- [x] **02-02** — [Blog routes](phases/02-wordpress-content-blog/02-02-PLAN.md) — index + `[slug]` + not-found; featured media fallbacks; pagination strategy if needed
+- [x] **02-01** â€” [WordPress client hardening](phases/02-wordpress-content-blog/02-01-PLAN.md) â€” timeouts on all fetches, consistent error surfaces, HTML trust note for `dangerouslySetInnerHTML`
+- [x] **02-02** â€” [Blog routes](phases/02-wordpress-content-blog/02-02-PLAN.md) â€” index + `[slug]` + not-found; featured media fallbacks; pagination strategy if needed
 
 ### Phase 3: SEO & operations
 **Goal:** Search and social surfaces reflect core routes and blog posts; production builds and monitoring match documented constraints.
@@ -80,8 +100,8 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 **Plans**
 
-- [ ] **03-01** — Metadata + OG/Twitter absolute URLs audit across marketing + blog templates
-- [ ] **03-02** — Sitemap scale (paginate beyond 100 posts), CI/build parity, Speed Insights verification
+- [ ] **03-01** â€” Metadata + OG/Twitter absolute URLs audit across marketing + blog templates
+- [ ] **03-02** â€” Sitemap scale (paginate beyond 100 posts), CI/build parity, Speed Insights verification
 
 ---
 
@@ -97,23 +117,23 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Branch + deps + reference move | ✅ Complete |
-| 2 | API route (9 providers, 21 models, 4 SDK bugs fixed) | ✅ Complete |
-| 3 | Component decomposition | ⏸️ Deferred |
-| 4 | shadcn/ui conversion | ✅ Complete |
-| 5 | Route integration at `/hub/chat` | ✅ Complete |
-| 6 | Verification (live testing) | 🔄 In Progress — needs API keys |
-| 7 | Polish (dots, Iosevka, real skills, presets) | ⏸️ Pending |
+| 1 | Branch + deps + reference move | âœ… Complete |
+| 2 | API route (9 providers, 21 models, 4 SDK bugs fixed) | âœ… Complete |
+| 3 | Component decomposition | â¸ï¸ Deferred |
+| 4 | shadcn/ui conversion | âœ… Complete |
+| 5 | Route integration at `/hub/chat` | âœ… Complete |
+| 6 | Verification (live testing) | ðŸ”„ In Progress â€” needs API keys |
+| 7 | Polish (dots, Iosevka, real skills, presets) | â¸ï¸ Pending |
 
 **Blocked on:** API keys in `.env.local`. Run `vercel env pull .env.local`.
 
-**Post-merge numbering (target):** Hub verification + production env → **Phase 4**; hub polish (deferred Phase 7 items) → **Phase 5** or sub-plans under Phase 4; then resume marketing **Phases 1–3** open plans as needed (or run in parallel with Phase 4 if marketing ships first).
+**Post-merge numbering (target):** Hub verification + production env â†’ **Phase 4**; hub polish (deferred Phase 7 items) â†’ **Phase 5** or sub-plans under Phase 4; then resume marketing **Phases 1â€“3** open plans as needed (or run in parallel with Phase 4 if marketing ships first).
 
 ---
 
 ## Progress
 
-**Execution order:** 1 → 2 → 3
+**Execution order:** 1 â†’ 2 â†’ 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -122,6 +142,6 @@ A parallel feature branch (`feature/ulti-chat-integration`) builds the AI hub ch
 | 3. SEO & operations | 0/2 | Not started | - |
 
 ---
-*Roadmap created: 2026-03-21 — granularity: coarse (3 phases)*
+*Roadmap created: 2026-03-21 â€” granularity: coarse (3 phases)*
 *Milestone: current v1 planning cycle*
-*Last updated: 2026-04-01 — Roadmapper: two-track note, post-merge Phase 4+, planning discipline; prior 2026-03-24 hub table*
+*Last updated: 2026-04-01 â€” Roadmapper: two-track note, post-merge Phase 4+, planning discipline; prior 2026-03-24 hub table*

@@ -52,15 +52,24 @@ export function PhilosophySection({ philosophyData }) {
         return;
       }
 
+      // --- Heading: 3D rotateX flip + blur cascade ---
       const headingChars = textRef.current?.querySelectorAll("h2 .split-char");
       if (headingChars?.length) {
-        gsap.set(headingChars, { opacity: 0, y: 12 });
+        gsap.set(headingChars, {
+          opacity: 0,
+          y: 40,
+          rotateX: -90,
+          filter: "blur(8px)",
+          willChange: "transform, opacity, filter",
+        });
         gsap.to(headingChars, {
           opacity: 1,
           y: 0,
-          stagger: 0.03,
-          duration: 0.5,
-          ease: "power2.out",
+          rotateX: 0,
+          filter: "blur(0px)",
+          stagger: 0.025,
+          duration: 0.8,
+          ease: "expo.out",
           scrollTrigger: {
             trigger: textRef.current,
             start: "top 78%",
@@ -69,23 +78,80 @@ export function PhilosophySection({ philosophyData }) {
         });
       }
 
-      quoteRefs.current.forEach((el) => {
-        if (!el) return;
-        const chars = el.querySelectorAll(".split-char");
-        if (!chars.length) return;
-        gsap.set(chars, { opacity: 0, y: 10 });
-        gsap.to(chars, {
+      // --- Description paragraphs: fade-up with blur ---
+      const descParagraphs = textRef.current?.querySelectorAll("p");
+      if (descParagraphs?.length) {
+        gsap.set(descParagraphs, { opacity: 0, y: 30, filter: "blur(6px)" });
+        gsap.to(descParagraphs, {
           opacity: 1,
           y: 0,
-          stagger: 0.022,
-          duration: 0.55,
-          ease: "power2.out",
+          filter: "blur(0px)",
+          stagger: 0.15,
+          duration: 0.9,
+          ease: "expo.out",
           scrollTrigger: {
-            trigger: el,
-            start: "top 88%",
+            trigger: textRef.current,
+            start: "top 65%",
             once: true,
           },
         });
+      }
+
+      // --- Quotes: different effect per quote ---
+      quoteRefs.current.forEach((el, quoteIndex) => {
+        if (!el) return;
+        const chars = el.querySelectorAll(".split-char");
+        if (!chars.length) return;
+
+        if (quoteIndex === 0) {
+          // Quote 1: Skew + horizontal slide
+          gsap.set(chars, { opacity: 0, skewX: 25, x: 40, willChange: "transform, opacity" });
+          gsap.to(chars, {
+            opacity: 1,
+            skewX: 0,
+            x: 0,
+            stagger: 0.018,
+            duration: 0.7,
+            ease: "expo.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          });
+        } else if (quoteIndex === 1) {
+          // Quote 2: Clip-path reveal from bottom
+          gsap.set(chars, {
+            clipPath: "polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)",
+            y: 15,
+            willChange: "clip-path, transform",
+          });
+          gsap.to(chars, {
+            clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+            y: 0,
+            stagger: 0.015,
+            duration: 0.6,
+            ease: "expo.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          });
+        } else {
+          // Quote 3: Scatter from center with scale
+          chars.forEach((char, i) => {
+            const center = (chars.length - 1) / 2;
+            const offset = center !== 0 ? (i - center) / center : 0;
+            gsap.set(char, {
+              opacity: 0,
+              x: offset * 120,
+              scale: 0.6,
+              willChange: "transform, opacity",
+            });
+          });
+          gsap.to(chars, {
+            opacity: 1,
+            x: 0,
+            scale: 1,
+            stagger: { each: 0.012, from: "center" },
+            duration: 0.7,
+            ease: "expo.out",
+            scrollTrigger: { trigger: el, start: "top 88%", once: true },
+          });
+        }
       });
 
       const t = requestAnimationFrame(() => {

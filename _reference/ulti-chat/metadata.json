@@ -1,0 +1,5 @@
+{
+  "name": "Ulti-chat",
+  "description": "An epic chat interface with configurable prompt injection buttons (green/red lights) surrounding the main chat area.",
+  "requestFramePermissions": []
+}
