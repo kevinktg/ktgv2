@@ -5,7 +5,7 @@ import { ExpertiseTransition } from "@/components/ExpertiseTransition";
 import { PhilosophySection } from "@/components/PhilosophySection";
 import { Footer } from "@/components/Footer";
 import { ValidationSection } from "@/components/ValidationSection";
-import { ContactCTA } from "@/components/ContactCTA";
+
 import { GeometricBackground } from "@/components/GeometricBackground";
 
 export default function Home() {
@@ -36,8 +36,6 @@ export default function Home() {
         {/* PHILOSOPHY: Black Background (Parallax Quotes) */}
         <PhilosophySection />
 
-        {/* CONTACT: CTA Form */}
-        <ContactCTA />
 
       </main>
 
