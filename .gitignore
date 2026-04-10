@@ -39,3 +39,4 @@ _reference/
 CLAUDE.md
 AGENTS.md
 .env*.local
+.mcp.json
